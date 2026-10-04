@@ -1,0 +1,17 @@
+.DS_Store
+.env
+.env.*
+.agentlas/
+node_modules/
+/.playwright-mcp/
+/data/
+/evidence/
+/fixtures/
+/tests/
+/scripts/
+/dist/
+/runtime/
+*.log
+*.tmp
+*.zip
+*.tar.gz

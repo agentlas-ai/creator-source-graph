@@ -1,0 +1,19 @@
+{
+  "name": "agentlas-creator-source-graph",
+  "version": "0.4.0",
+  "license": "MIT",
+  "type": "module",
+  "description": "Open-source creator discovery and source graphs powered by your subscribed AI host's web search",
+  "repository": "github:agentlas-ai/creator-source-graph",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node launch.mjs",
+    "serve": "node server.mjs",
+    "agent": "node cli.mjs",
+    "install:skills": "node cli.mjs install",
+    "check": "node --check server.mjs && node --check ui/graph.js && node --check cli.mjs"
+  },
+  "files": ["server.mjs", "launch.mjs", "cli.mjs", "install.mjs", "lib/", "ui/", "skills/", "Start.command", "Install-Skills.command", "Start.bat", "Install-Skills.bat", "start.sh", "install-skills.sh", "app.json", "README.md", "LICENSE", "CHANGELOG.md", "assets/creator-source-graph.png"]
+}
