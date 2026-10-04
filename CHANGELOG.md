@@ -2,6 +2,9 @@
 
 ## 0.6.0 — 2026-10-05
 
+- Opens the whole content-and-source graph by default; selecting content focuses its upstream path.
+- Adds compact, icon-led AI priorities for evidence-backed reading, investigation, building and content creation.
+- Keeps source summaries and path details expandable to reduce visual clutter.
 - Starts content discovery with Instagram, YouTube, X and Threads.
 - Ranks confirmed views within each platform and preserves unknown counts without substituting likes or snippet estimates.
 - Traces content through intermediate references to the earliest source found in the investigation, without claiming a global first origin.

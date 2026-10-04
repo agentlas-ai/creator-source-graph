@@ -24,6 +24,10 @@
     <symbol id="icon-link" viewBox="0 0 24 24"><path d="m10 7 3-3a5 5 0 0 1 7 7l-3 3m-3 3-3 3a5 5 0 0 1-7-7l3-3m1 6 8-8" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
     <symbol id="icon-refresh" viewBox="0 0 24 24"><path d="M20 9a8 8 0 1 0 0 7M20 3v6h-6" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
     <symbol id="icon-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+    <symbol id="icon-read" viewBox="0 0 24 24"><path d="M12 5C8 2 4 3 2 4v15c3-2 7-2 10 0 3-2 7-2 10 0V4c-2-1-6-2-10 1Zm0 0v14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+    <symbol id="icon-build" viewBox="0 0 24 24"><path d="m7 6-6 6 6 6m10-12 6 6-6 6m-4-15-2 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icon-create" viewBox="0 0 24 24"><path d="m4 16 12-12 4 4L8 20H4v-4Zm9-9 4 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+    <symbol id="icon-investigate" viewBox="0 0 24 24"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="m15 15 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
   </defs></svg>
   <section id="login-gate" class="login-gate" aria-labelledby="login-title">
     <a class="login-brand" href="https://agentlas.cloud" target="_blank" rel="noopener noreferrer">◆ Agentlas</a>
@@ -43,7 +47,9 @@
   </section>
   <main class="workspace">
     <aside class="content-rail" aria-labelledby="content-heading">
-      <div class="lane-heading"><span class="step-number">1</span><div><h1 id="content-heading">Find content</h1><p>Highest views within each platform</p></div></div>
+      <div class="lane-heading"><span class="step-number">1</span><div><h1 id="content-heading">Start here</h1><p>AI priorities</p></div></div>
+      <div id="strategy-list" class="strategy-list" role="list" aria-label="AI next action priorities"></div>
+      <div class="content-section-label"><span>Content</span><span id="content-count"></span></div>
       <div class="platform-filters" aria-label="Content platform">
         <button class="platform-filter" data-platform="instagram" aria-label="Instagram content" aria-pressed="false"><svg><use href="#logo-instagram"/></svg><span>Instagram</span></button>
         <button class="platform-filter" data-platform="youtube" aria-label="YouTube content" aria-pressed="false"><svg><use href="#logo-youtube"/></svg><span>YouTube</span></button>
@@ -53,8 +59,8 @@
       <div id="content-carousel" class="content-carousel" role="list" aria-label="Discovered social content"></div>
     </aside>
     <section class="graph-stage" aria-labelledby="trace-heading">
-      <div class="lane-heading"><span class="step-number">2</span><div><h2 id="trace-heading">Trace the sources</h2><p>Content → intermediate sources → earliest found</p></div></div>
-      <div class="trace-controls"><span id="trace-selection">Choose a content item to follow its sources</span><button id="inference-button" class="evidence-toggle" aria-pressed="true" type="button">Inferred candidates</button></div>
+      <div class="lane-heading"><span class="step-number">2</span><div><h2 id="trace-heading">Source map</h2><p>Content → sources</p></div></div>
+      <div class="trace-controls"><span id="trace-selection">All content</span><button id="overview-button" class="icon-button evidence-toggle" aria-label="Show all content paths" title="All content paths" aria-pressed="true" type="button"><svg><use href="#icon-grid"/></svg></button><button id="inference-button" class="icon-button evidence-toggle" aria-label="Show inferred candidates" title="Inferred candidates" aria-pressed="true" type="button"><svg><use href="#icon-eye"/></svg></button></div>
       <div class="graph-canvas"><svg id="source-graph" viewBox="0 0 720 560" role="group" aria-label="Reverse source paths"></svg><div id="empty-state" class="empty-state"><h2>Follow the sources behind the content.</h2><p>Ask your AI to find content and trace its sources. Results arrive here.</p></div></div>
       <div class="trace-legend"><span><i class="solid-line"></i>Observed link</span><span><i class="dashed-line"></i>Inferred candidate</span><span id="trace-count"></span></div>
     </section>

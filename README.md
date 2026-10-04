@@ -2,7 +2,7 @@
 
 **Find creator content on Instagram, YouTube, X and Threads, then trace its sources.**
 
-Creator Source Graph is an open-source local research app for Codex and Claude Code. Your existing AI host discovers public content, checks available view counts, follows source links, and saves a browser graph on your computer. No model or platform API keys are required for the skill workflow.
+Creator Source Graph is an open-source local research app for Codex and Claude Code. Your existing AI host discovers public content, checks available view counts, follows source links, and recommends evidence-backed next steps in a browser graph on your computer. No model or platform API keys are required for the skill workflow.
 
 ![Creator Source Graph browser workspace](assets/creator-source-graph.png)
 
@@ -21,11 +21,15 @@ From the obtained app folder, the host runs `./runtime/node cli.mjs setup --host
 
 Your host supplies reasoning, search and browser execution. Its existing subscription, tool availability, permissions and usage limits apply. Installing the app does not add missing host tools. A standalone browser cannot perform AI research by itself, and a cloud-only host cannot reach this machine's loopback app.
 
-## Read the graph from left to right
+## Explore the whole graph, then choose a next step
 
-- **Left — discover content.** Start with Instagram, YouTube, X and Threads. Inspect each post, creator, observation date and available views. Rank confirmed views within each platform; unknown views remain unknown, and likes or search snippets are not substituted for views. This is a bounded discovery sample, not a global popularity ranking.
+The graph opens with all collected content and its source connections visible. Click a content item to focus on its upstream path; return to the overview to compare the whole investigation.
+
+The left panel combines the four-platform content sample with compact, icon-led AI priorities: what to read, investigate, build or create first, and where to begin. Open a recommendation to inspect its rationale and supporting pages. These are proposed next actions from your host, not completed work or predictions of reach.
+
+- **Left — choose a starting point.** Review the AI priorities and content on Instagram, YouTube, X and Threads. Inspect each post, creator, observation date and available views. Rank confirmed views within each platform; unknown views remain unknown, and likes or search snippets are not substituted for views. This is a bounded discovery sample, not a global popularity ranking.
 - **Middle — trace intermediate sources.** Follow explicit hyperlinks or URL citations from a post to projects, articles, papers and other material, then continue upstream. Inspect each connection's supporting page.
-- **Right — inspect the earliest source found.** Compare the upstream sources discovered in this investigation. A terminal node or early publication date does not prove the world's first origin. A possible source relationship supported by semantic and chronological evidence remains labelled **inferred**, with its rationale and evidence, separate from explicit links.
+- **Right — inspect the earliest source found.** Expand a source’s summary or path when you need the details. Compare the upstream sources discovered in this investigation. A terminal node or early publication date does not prove the world's first origin. A possible source relationship supported by semantic and chronological evidence remains labelled **inferred**, with its rationale and evidence, separate from explicit links.
 
 Hover nodes and platform logos for original URLs, short summaries and collection status. Export JSON to review the investigation. Source scores describe paths in the collected sample, not audience overlap, market share or conversion.
 
@@ -140,7 +144,7 @@ A run records research progress; starting one does not launch or purchase an AI 
 
 ## Structured batch input
 
-The skill handles submissions for normal use. For custom host workflows, [the import schema](skills/creator-source-graph/references/import-schema.md) documents bounded records, view-count provenance, platform coverage and relationship evidence. Submit to the exact run ID returned by `start`:
+The skill handles submissions for normal use. For custom host workflows, [the import schema](skills/creator-source-graph/references/import-schema.md) documents bounded records, view-count provenance, platform coverage, relationship evidence and optional AI priorities. Submit to the exact run ID returned by `start`:
 
 ```sh
 node cli.mjs submit <runId> batch.json
