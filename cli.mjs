@@ -5,7 +5,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const VERSION = '0.4.0';
+const VERSION = '0.5.0';
 const MAX_BYTES = 8 * 1024 * 1024;
 const APP_ROOT = resolve(process.env.CREATOR_GRAPH_APP_ROOT || dirname(fileURLToPath(import.meta.url)));
 
@@ -51,6 +51,7 @@ async function request(origin, path, method = 'GET', payload) {
   let data;
   try { data = JSON.parse(raw); } catch { throw new Error(`Local app returned non-JSON (HTTP ${response.status}).`); }
   if (!response.ok) {
+    if (response.status === 401) throw Object.assign(new Error('Agentlas sign-in is required.'), { loginRequired: true });
     const message = typeof data.error === 'string' ? data.error : typeof data.error?.message === 'string' ? data.error.message : 'Request rejected';
     throw new Error(`HTTP ${response.status}: ${message.slice(0, 500)}`);
   }
@@ -62,7 +63,7 @@ async function health(origin) {
   if (![result.product, result.app, result.id].includes('creator-source-graph')) throw new Error('The local port belongs to another app.');
   if (typeof result.version !== 'string' || !/^\d+\.\d+\.\d+/.test(result.version)) throw new Error('The local app has no compatible version metadata.');
   const [major, minor] = result.version.split('.').map(Number);
-  if (major === 0 && minor < 4) throw new Error('This CLI requires Creator Source Graph 0.4.0 or newer. Close the older app and run start again.');
+  if (major === 0 && minor < 5) throw new Error('This CLI requires Creator Source Graph 0.5.0 or newer with Agentlas sign-in. Upgrade the app, close the older app and run start again.');
   return result;
 }
 
@@ -108,29 +109,93 @@ async function openBrowser(origin) {
   });
 }
 
+async function authStatus(origin) {
+  let raw;
+  try { raw = await request(origin, '/api/auth/status'); }
+  catch { throw new Error('Could not read local Agentlas sign-in status. Check the app and sign-in page.'); }
+  if (!raw || typeof raw.authenticated !== 'boolean') throw new Error('The local app returned invalid authentication status.');
+  // Never forward arbitrary auth fields, errors, provider replies or tokens.
+  const result = { authenticated: raw.authenticated, loginRequired: !raw.authenticated,
+    status: raw.authenticated ? 'signed-in' : ['signed-out', 'pending', 'error'].includes(raw.status) ? raw.status : 'signed-out' };
+  if (raw.authenticated && raw.user && typeof raw.user === 'object') {
+    result.user = {};
+    if (typeof raw.user.id === 'string') result.user.id = raw.user.id.slice(0, 160);
+    if (typeof raw.user.displayName === 'string') result.user.displayName = raw.user.displayName.slice(0, 160);
+  }
+  if (typeof raw.expiresAt === 'string' && Number.isFinite(Date.parse(raw.expiresAt))) result.expiresAt = new Date(raw.expiresAt).toISOString();
+  if (raw.status === 'error') result.error = 'Agentlas sign-in did not complete. Check the sign-in page and retry login when ready.';
+  return result;
+}
+
+function loginReceipt(origin, auth, extras = {}) {
+  return { ...auth, loginUrl: origin + '/auth/login?returnTo=/', researchPerformed: false, run: null, ...extras };
+}
+
+function waitOptions(args, defaultSeconds) {
+  let seconds = defaultSeconds; const positional = [];
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--wait-seconds') {
+      const value = args[++i];
+      if (!value || !/^\d+$/.test(value) || Number(value) > 300) throw new Error('--wait-seconds must be an integer from 0 to 300.');
+      seconds = Number(value);
+    } else if (args[i].startsWith('--')) throw new Error('Unknown login/start option: ' + args[i]);
+    else positional.push(args[i]);
+  }
+  return { seconds, positional };
+}
+
+async function waitForLogin(origin, seconds, initial) {
+  let auth = initial;
+  const deadline = Date.now() + seconds * 1000;
+  while (!auth.authenticated && Date.now() < deadline) {
+    await new Promise(done => setTimeout(done, Math.min(2000, deadline - Date.now())));
+    auth = await authStatus(origin);
+  }
+  return auth;
+}
+
+async function loginFlow(origin, seconds, extras = {}) {
+  const initial = await authStatus(origin);
+  if (initial.authenticated) return initial;
+  let browser = initial.status === 'pending' ? 'already-pending' : 'opened';
+  if (initial.status !== 'pending') {
+    try { await openBrowser(origin + '/auth/login?returnTo=/'); }
+    catch { browser = 'manual'; }
+  }
+  if (seconds > 0) process.stderr.write('Sign in on the Agentlas page to continue. Waiting up to ' + seconds + ' seconds; no research has run.\n');
+  const auth = await waitForLogin(origin, seconds, initial);
+  return auth.authenticated ? { ...auth, browser } : loginReceipt(origin, auth, {
+    browser, waitedSeconds: seconds, ...extras,
+    note: 'Sign in on the Agentlas page, then check login status and resume the same requested target. No research run was created.',
+  });
+}
+
 function help() {
   return {
     product: 'creator-source-graph', version: VERSION,
     commands: {
-      'start [url]': 'Start/reuse the local app; URL creates a host-agent research run.',
+      'start [url] [--wait-seconds N]': 'Start/reuse app; first opens Agentlas sign-in and waits up to 90 seconds, then creates a research run only when signed in.',
+      'login [--wait-seconds N]': 'Open Agentlas sign-in if needed; default wait is 0, optional wait is 0–300 seconds. Never reads credentials.',
+      'login status / auth-status': 'Read current Agentlas sign-in status without opening another browser page.',
+      logout: 'Sign out the local app session and reread status.',
       'status [runId]': 'Get a run, or list runs.',
       'progress <runId> [note]': 'Record that host research is underway.',
       'submit <runId> <json-file|->': 'Import bounded JSON with records, coverage, status and note. Use - for stdin.',
       'export [runId]': 'Without ID, export portable raw workspace. With ID, return exact run, raw workspace and rendered graph nodes/edges.',
       'stop <runId> / cancel <runId>': 'Cancel this research run; does not shut down the app.',
-      open: 'Start/reuse the app and open its local graph.',
+      open: 'Start/reuse app and open local graph, or Agentlas sign-in when signed out.',
       'skill-prompt [url]': 'Print a prompt to invoke the installed skill in an existing AI host.',
       'install --host codex|claude|both [--skills-dir path] [--force]': 'Install local host skills. Custom directory requires one host.',
       'help / version': 'Print machine-readable help or version.',
     },
     localUrl: 'http://127.0.0.1:4327',
     configuration: 'CREATOR_GRAPH_URL overrides the loopback HTTP origin.',
-    research: 'Use the existing Codex/Claude Code session and its web/browser tools. The app makes no LLM calls and needs no paid provider API keys.',
+    research: 'Sign in to Agentlas, then use the existing Codex/Claude Code session and its web/browser tools. The app makes no LLM calls and needs no paid provider API keys.',
     evidence: 'Read skills/creator-source-graph/references/import-schema.md before collecting; agent records are reported host evidence, not server-verified observations.',
   };
 }
 
-export async function main(argv = process.argv.slice(2)) {
+async function dispatch(argv) {
   const [command = 'help', ...args] = argv;
   if (command === 'help' || command === '--help' || command === '-h') return help();
   if (command === 'version' || command === '--version') return { product: 'creator-source-graph', version: VERSION };
@@ -147,19 +212,56 @@ export async function main(argv = process.argv.slice(2)) {
     };
   }
   const origin = localOrigin();
+  if (command === 'login' || command === 'auth-status') {
+    const { seconds, positional } = waitOptions(args, 0);
+    if (command === 'auth-status' || positional[0] === 'status') {
+      if (positional.length > (command === 'auth-status' ? 0 : 1) || (command === 'auth-status' ? args.length : args.length !== 1)) throw new Error('login status/auth-status accepts no additional arguments.');
+      await health(origin);
+      const auth = await authStatus(origin);
+      return auth.authenticated ? auth : loginReceipt(origin, auth);
+    }
+    if (positional.length) throw new Error('login accepts only --wait-seconds N or status.');
+    await ensureApp(origin);
+    return loginFlow(origin, seconds);
+  }
+  if (command === 'logout') {
+    if (args.length) throw new Error('logout accepts no arguments.');
+    await health(origin);
+    try { await request(origin, '/api/auth/logout', 'POST', {}); }
+    catch { throw new Error('Local sign-out could not be confirmed. Check login status before retrying.'); }
+    const auth = await authStatus(origin);
+    return auth.authenticated ? { ...auth, loggedOut: false } : { ...loginReceipt(origin, auth), loggedOut: true };
+  }
   if (command === 'start') {
-    if (args.length > 1) throw new Error('start accepts at most one URL.');
+    const { seconds, positional } = waitOptions(args, 90);
+    if (positional.length > 1) throw new Error('start accepts at most one URL.');
+    const intendedProductUrl = positional[0] || null;
     const app = await ensureApp(origin);
-    if (!args[0]) return { url: origin, health: app };
-    const started = await request(origin, '/api/agent/runs', 'POST', { url: args[0] });
-    return { url: origin, run: started.run || started };
+    const auth = await loginFlow(origin, seconds, { intendedProductUrl });
+    if (!auth.authenticated) return { url: origin, ...auth };
+    if (!intendedProductUrl) return { url: origin, health: app, auth };
+    try {
+      const started = await request(origin, '/api/agent/runs', 'POST', { url: intendedProductUrl });
+      return { url: origin, run: started.run || started };
+    } catch (error) {
+      if (error.loginRequired) return loginReceipt(origin, await authStatus(origin), {
+        intendedProductUrl, authenticated: false, loginRequired: true,
+        note: 'Sign-in was required when creating this run. Check login status before resuming the same target; no run was created.',
+      });
+      throw error;
+    }
   }
   if (command === 'open') {
     if (args.length) throw new Error('open accepts no arguments.');
-    await ensureApp(origin); await openBrowser(origin); return { url: origin, opened: true };
+    await ensureApp(origin);
+    const auth = await authStatus(origin);
+    if (!auth.authenticated) return loginFlow(origin, 0);
+    await openBrowser(origin); return { url: origin, opened: true };
   }
   if (!['status', 'progress', 'submit', 'export', 'stop', 'cancel'].includes(command)) throw new Error(`Unknown command: ${command}. Run help.`);
   await health(origin);
+  const auth = await authStatus(origin);
+  if (!auth.authenticated) return loginReceipt(origin, auth, { requestedCommand: command, requestedRunId: args[0] || null });
   if (command === 'status') {
     if (args.length > 1) throw new Error('status accepts at most one run ID.');
     return request(origin, args[0] ? `/api/agent/runs/${runId(args[0])}` : '/api/agent/runs');
@@ -193,6 +295,20 @@ export async function main(argv = process.argv.slice(2)) {
   }
   if (args.length !== 1) throw new Error('stop/cancel needs exactly one run ID.');
   return request(origin, `/api/agent/runs/${runId(args[0])}/cancel`, 'POST', {});
+}
+
+export async function main(argv = process.argv.slice(2)) {
+  try { return await dispatch(argv); }
+  catch (error) {
+    if (!error.loginRequired) throw error;
+    const origin = localOrigin();
+    const auth = await authStatus(origin);
+    return loginReceipt(origin, auth, {
+      authenticated: false, loginRequired: true,
+      requestedCommand: argv[0] || null, requestedRunId: argv[1] || null,
+      note: 'The app rejected this request because sign-in is required. Check login status before resuming; no browser page was reopened.',
+    });
+  }
 }
 
 const entryPath = (() => { try { return process.argv[1] ? realpathSync(process.argv[1]) : ''; } catch { return ''; } })();

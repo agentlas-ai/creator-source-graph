@@ -3,7 +3,7 @@ import { realpathSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { openStore } from './lib/store.mjs';
+import { openAccountStore } from './lib/account-store.mjs';
 import { mergeInput } from './lib/model.mjs';
 import { normalizeUrl } from './lib/urls.mjs';
 import { sourceDetail } from './lib/graph.mjs';
@@ -12,9 +12,10 @@ import { inputUrl, researchGraph } from './lib/audience.mjs';
 import { platformConnections, collectSocialUrl, socialPlatform } from './lib/social.mjs';
 import { startResearchRun, importResearchRun, transitionResearchRun } from './lib/research.mjs';
 import { dataDirectory } from './lib/runtime.mjs';
+import { openAuth } from './lib/auth.mjs';
 
 export const ROOT = path.dirname(fileURLToPath(import.meta.url));
-export const VERSION = '0.4.0';
+export const VERSION = '0.5.0';
 const STATIC = new Map([['/', 'graph.html'], ['/index.html', 'graph.html'], ['/app.js', 'graph.js'], ['/style.css', 'graph.css']]);
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' };
 function json(res, status, value) {
@@ -39,14 +40,23 @@ function runFrom(workspace, id) {
   return run;
 }
 
-export async function createApp({ dataDir = dataDirectory(), seed = { records: [] }, empty = false, collect = collectBatch } = {}) {
-  const store = await openStore(dataDir, seed, { empty });
+export async function createApp({ dataDir = dataDirectory(), seed = { records: [] }, empty = false, collect = collectBatch, authOptions } = {}) {
+  const auth = await openAuth(dataDir, authOptions);
+  const stores = new Map();
+  const accountStore = async user => {
+    if (!stores.has(user.id)) {
+      const pending = openAccountStore(dataDir, auth.accountDirectory(user), user, seed, { empty });
+      stores.set(user.id, pending);
+      pending.catch(() => { if (stores.get(user.id) === pending) stores.delete(user.id); });
+    }
+    return stores.get(user.id);
+  };
   let collecting = false;
-  const graphData = () => {
+  const graphData = store => {
     const workspace = store.get();
     return { ...researchGraph(workspace), researchRuns: workspace.researchRuns || [], activeResearchRunId: workspace.activeResearchRunId || null };
   };
-  const begin = async value => {
+  const begin = async (store, value) => {
     const url = inputUrl(value);
     const analysis = {
       mode: 'audience', url, title: new URL(url).hostname, topics: [], labels: ['Web research'],
@@ -56,7 +66,7 @@ export async function createApp({ dataDir = dataDirectory(), seed = { records: [
       queryBasis: 'Your AI host reads the product page, searches the web, and checks original sources.'
     };
     const report = await store.update(workspace => startResearchRun(workspace, url, { analysis }));
-    return { ...report, run: report.run, graph: graphData(), attempts: [] };
+    return { ...report, run: report.run, graph: graphData(store), attempts: [] };
   };
   const server = http.createServer(async (req, res) => {
     res.setHeader('x-content-type-options', 'nosniff');
@@ -76,7 +86,29 @@ export async function createApp({ dataDir = dataDirectory(), seed = { records: [
         return res.end(content);
       }
       if (req.method === 'GET' && url.pathname === '/api/health') return json(res, 200, { status: 'ok', product: 'creator-source-graph', app: 'creator-source-graph', id: 'creator-source-graph', version: VERSION, collecting, mode: 'subscription-ai-web-research', apiKeysRequired: false });
-      if (req.method === 'GET' && url.pathname === '/api/workspace') return json(res, 200, graphData());
+      if (req.method === 'GET' && url.pathname === '/api/auth/status') return json(res, 200, await auth.status());
+      if (req.method === 'GET' && url.pathname === '/auth/login') {
+        if ((await auth.status()).authenticated) { res.writeHead(303, { location: '/', 'cache-control': 'no-store' }); return res.end(); }
+        const origin = 'http://127.0.0.1:' + server.address().port;
+        res.writeHead(303, { location: auth.begin(origin), 'cache-control': 'no-store' }); return res.end();
+      }
+      if (req.method === 'GET' && url.pathname === '/auth/callback') {
+        try {
+          const identity = await auth.callback(url);
+          if (identity.authenticated) await accountStore(identity.user);
+        } catch { /* The local gate shows a safe retry message; graph files remain preserved. */ }
+        res.writeHead(303, { location: '/', 'cache-control': 'no-store' }); return res.end();
+      }
+      if (req.method === 'POST' && url.pathname === '/api/auth/logout') { await body(req); return json(res, 200, await auth.logout()); }
+      if (req.method === 'POST' && url.pathname === '/api/shutdown') {
+        json(res, 200, { status: 'stopping' });
+        setTimeout(() => { server.close(); server.closeIdleConnections(); }, 100).unref();
+        return;
+      }
+      const identity = await auth.status();
+      if (!identity.authenticated) return json(res, 401, { error: 'Sign in with Agentlas to open your graph.', loginRequired: true, authenticated: false, loginUrl: '/auth/login?returnTo=/' });
+      const store = await accountStore(identity.user);
+      if (req.method === 'GET' && url.pathname === '/api/workspace') return json(res, 200, graphData(store));
       if (req.method === 'GET' && url.pathname === '/api/platforms') return json(res, 200, { platforms: platformConnections(), provider: 'your-ai-host', apiKeysRequired: false, readOnly: true });
       if (req.method === 'GET' && url.pathname === '/api/agent/guide') return json(res, 200, {
         name: 'creator-source-graph', version: VERSION,
@@ -93,7 +125,7 @@ export async function createApp({ dataDir = dataDirectory(), seed = { records: [
         const workspace = store.get();
         return json(res, 200, { runs: workspace.researchRuns || [], activeResearchRunId: workspace.activeResearchRunId || null });
       }
-      if (req.method === 'POST' && ['/api/agent/runs', '/api/analyze'].includes(url.pathname)) return json(res, 201, await begin((await body(req)).url));
+      if (req.method === 'POST' && ['/api/agent/runs', '/api/analyze'].includes(url.pathname)) return json(res, 201, await begin(store, (await body(req)).url));
       const runMatch = /^\/api\/agent\/runs\/([a-f0-9-]{36})(?:\/(import|progress|cancel))?$/.exec(url.pathname);
       if (runMatch) {
         const [, id, action] = runMatch;
@@ -101,16 +133,16 @@ export async function createApp({ dataDir = dataDirectory(), seed = { records: [
         if (req.method === 'POST' && action === 'import') {
           const input = await body(req);
           const report = await store.update(workspace => importResearchRun(workspace, id, input));
-          return json(res, 200, { report, run: report.run, graph: graphData() });
+          return json(res, 200, { report, run: report.run, graph: graphData(store) });
         }
         if (req.method === 'POST' && (action === 'progress' || action === 'cancel')) {
           const input = await body(req);
           const report = await store.update(workspace => transitionResearchRun(workspace, id, action === 'cancel' ? 'cancelled' : 'searching', { note: input.note }));
-          return json(res, 200, { ...report, graph: graphData() });
+          return json(res, 200, { ...report, graph: graphData(store) });
         }
       }
       if (req.method === 'GET' && url.pathname === '/api/source') {
-        const detail = sourceDetail(graphData(), url.searchParams.get('id'));
+        const detail = sourceDetail(graphData(store), url.searchParams.get('id'));
         return json(res, detail ? 200 : 404, detail || { error: 'Source not found.' });
       }
       if (req.method === 'GET' && url.pathname === '/api/export') {
@@ -118,7 +150,7 @@ export async function createApp({ dataDir = dataDirectory(), seed = { records: [
         return json(res, 200, store.get());
       }
       if (req.method === 'GET' && url.pathname === '/api/drafts') {
-        const graph = graphData();
+        const graph = graphData(store);
         const text = ['# Creator Source Graph — research drafts', '', ...graph.strategies.flatMap(item => ['## ' + item.action, 'Source: ' + item.url, item.caveat, ''])].join('\n');
         res.writeHead(200, { 'content-type': 'text/markdown; charset=utf-8', 'content-disposition': 'attachment; filename="creator-source-graph-drafts.md"', 'cache-control': 'no-store' });
         return res.end(text);
@@ -130,7 +162,7 @@ export async function createApp({ dataDir = dataDirectory(), seed = { records: [
           if (result.workspace.analysis?.mode === 'audience') result.workspace.analysis.reportedUrls = [...new Set([...(workspace.analysis.reportedUrls || []), ...input.records.map(record => normalizeUrl(record.url))])].slice(-200);
           return result;
         });
-        return json(res, 200, { report, graph: graphData() });
+        return json(res, 200, { report, graph: graphData(store) });
       }
       if (req.method === 'POST' && url.pathname === '/api/collect') {
         if (collecting) return json(res, 409, { error: 'A collection is already running.' });
@@ -155,20 +187,15 @@ export async function createApp({ dataDir = dataDirectory(), seed = { records: [
             if (merged.workspace.analysis) merged.workspace.analysis.sourceUrls = [...new Set([...(merged.workspace.analysis.sourceUrls || []), ...records.map(record => record.url)])];
             return merged;
           });
-          return json(res, 200, { report, attempts, graph: graphData() });
+          return json(res, 200, { report, attempts, graph: graphData(store) });
         } finally { collecting = false; }
-      }
-      if (req.method === 'POST' && url.pathname === '/api/shutdown') {
-        json(res, 200, { status: 'stopping' });
-        setTimeout(() => { server.close(); server.closeIdleConnections(); }, 100).unref();
-        return;
       }
       return json(res, 404, { error: 'Route not found.' });
     } catch (error) {
       json(res, error.httpStatus || (/not active|terminal|cancelled|stale/i.test(error.message) ? 409 : 400), { error: error.message });
     }
   });
-  return { server, store };
+  return { server, auth };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {

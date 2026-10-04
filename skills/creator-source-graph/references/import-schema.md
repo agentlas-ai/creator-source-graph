@@ -26,6 +26,7 @@ Each record accepts:
 | `url` | Exact public HTTP/HTTPS content/source URL. No credentials or local/private hosts. |
 | `role` | `content` for creator posts; `source` for linked papers, repositories or original documents. |
 | `title` | Observed short title; no invented title from a URL. |
+| `summary` | Optional one-sentence AI paraphrase of an original page actually opened, at most 280 characters on one line. Leave absent for search-only candidates. Never copy article paragraphs. |
 | `creator` | `{name, url?, identityStatus}`. Required for content. `identityStatus` is `page-metadata` for visible author/channel, `domain-placeholder` if only a domain is known, or `provided` if supplied by the user. Domain placeholders are not verified creator identities. |
 | `observedAt` | Required actual ISO observation time for this record. |
 | `publishedAt` | Optional observed publication date; omit/null when unknown. |

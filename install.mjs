@@ -93,7 +93,7 @@ export async function installFromArgs(args, appRoot = SOURCE_ROOT) {
     } finally { await rm(temp, { recursive: true, force: true }); }
   }
   return {
-    installed, version: '0.4.0',
+    installed, version: '0.5.0',
     invocation: { codex: '$creator-source-graph <url>', claude: '/creator-source-graph <url>' },
     note: 'Open or reload the local host session to discover the skill. The bridge uses this app folder and Node runtime; reinstall if either moves. No account settings or provider credentials were changed.',
   };

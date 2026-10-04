@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0
+
+- Opens Agentlas login on first skill use, then resumes the original product research request.
+- Stores local workspaces separately for each Agentlas account and preserves existing workspace data on upgrade.
+- Adds sign-out and login-status commands without exposing identity tokens to the AI host.
+- Adds floating previews for graph nodes and platform logos, with original links, observation dates, collection status, and optional short AI summaries.
+- Keeps search-only discoveries free of original-page summary claims and guards the UI against delayed responses after account changes.
+
 ## 0.4.0
 
 - Introduces the public, local-first Creator Source Graph app for creator discovery and source provenance.

@@ -12,7 +12,7 @@ Your existing AI host supplies reasoning, web search, and browser tools. The app
 
 - Research creators publishing about a product, category, or related problem.
 - Follow public links from creator content to projects, articles, papers, and other sources.
-- Inspect supporting URLs, observation dates, creator identity, and collection status.
+- Hover graph nodes and platform logos for original links, short summaries, and collection status.
 - Keep observed links separate from inferred relationships and search discoveries.
 - Explore direct and additional second-hop creator paths within your collected sample.
 - Export structured research as JSON for review or further analysis.
@@ -39,7 +39,17 @@ cd creator-source-graph
 npm start
 ```
 
-No npm dependencies need to be installed. The launcher starts the local server and opens the browser. The graph starts with your own workspace, ready for research.
+No npm dependencies need to be installed. The launcher starts the local server and opens the browser. Sign in with your Agentlas account to open your local graph.
+
+## Sign in with Agentlas
+
+The first skill invocation opens the Agentlas login screen. After you sign in, the browser returns to Creator Source Graph and the AI continues with the product URL you supplied. If login takes longer than the host's wait, the skill checks login status and resumes the same request.
+
+Agentlas login identifies your local workspace. It does not replace your Codex or Claude Code subscription. No model or search API key is required. Graphs stay on your computer and are separated by Agentlas account; signing in on another computer does not download a cloud copy.
+
+Use **Sign out** to return to the login screen. The app keeps your local graph for your next sign-in. On upgrade, an existing unassigned workspace is preserved and copied into the first signed-in account's local workspace; subsequent accounts start separately.
+
+![Agentlas sign-in screen for Creator Source Graph](assets/agentlas-sign-in.png)
 
 ## Connect Codex or Claude Code
 
@@ -77,7 +87,7 @@ In **Codex**:
 $creator-source-graph https://agentlas.cloud
 ```
 
-You can add a brief, such as “Find creators covering AI agent workflows and trace the public sources they cite.” The agent researches public pages, submits structured observations to the local app, and reports what it could verify. Keep the app open while reviewing the graph.
+You can add a brief, such as “Find creators covering AI agent workflows and trace the public sources they cite.” Complete Agentlas login when prompted. The agent then researches public pages, submits structured observations to the local app, and reports what it could verify. Keep the app open while reviewing the graph.
 
 ## How it works
 
@@ -85,7 +95,10 @@ You can add a brief, such as “Find creators covering AI agent workflows and tr
 Product URL + research brief
           ↓
 Codex / Claude Code + installed skill
-(reasoning, web search, browser observations)
+          ↓
+Agentlas sign-in → account's local workspace
+          ↓
+Host reasoning, web search, browser observations
           ↓
 Structured research batches → local app → browser source graph
 ```
@@ -101,7 +114,10 @@ Run commands from the app directory:
 | Command | Purpose |
 | --- | --- |
 | `node cli.mjs install --host both` | Install the skill for Codex and Claude Code. |
-| `node cli.mjs start https://agentlas.cloud` | Start a research run for a product URL. |
+| `node cli.mjs login --wait-seconds 90` | Open Agentlas login and wait for sign-in. |
+| `node cli.mjs login status` | Check login without reopening a browser. |
+| `node cli.mjs logout` | Sign out of the local app. |
+| `node cli.mjs start https://agentlas.cloud` | Sign in if needed, then start a research run for the original URL. |
 | `node cli.mjs status [runId]` | List research runs or inspect one run. |
 | `node cli.mjs submit <runId> <json-file\|->` | Submit a structured batch from a file or standard input. |
 | `node cli.mjs export [runId]` | Export the local workspace, optionally with run status. |
@@ -147,7 +163,7 @@ This is a schema example, not a research finding. Replace its URL, title, timest
 }
 ```
 
-Use `agent-search` for discovery candidates without original-page links or mentions. Use `agent-browser` only after opening the exact page; its `evidenceUrl` must match the record URL. Creator content records also need `creator.name`. Keep links to original observed hrefs, and use `null` or omit unavailable metrics. [Full input schema](skills/creator-source-graph/references/import-schema.md) documents the fields and coverage rules. A partial submission closes that run; start a new run to continue collecting.
+Use `agent-search` for discovery candidates without original-page links, mentions, or summaries. Use `agent-browser` only after opening the exact page; its `evidenceUrl` must match the record URL. An optional `summary` is a one-sentence AI paraphrase of that opened page, at most 280 characters. Creator content records also need `creator.name`. Keep links to original observed hrefs, and use `null` or omit unavailable metrics. [Full input schema](skills/creator-source-graph/references/import-schema.md) documents the fields and coverage rules. A partial submission closes that run; start a new run to continue collecting.
 
 ## Reading the evidence
 

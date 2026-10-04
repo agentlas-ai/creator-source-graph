@@ -24,9 +24,16 @@
     <symbol id="icon-refresh" viewBox="0 0 24 24"><path d="M20 9a8 8 0 1 0 0 7M20 3v6h-6" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
     <symbol id="icon-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
   </defs></svg>
+  <section id="login-gate" class="login-gate" aria-labelledby="login-title">
+    <a class="login-brand" href="https://agentlas.cloud" target="_blank" rel="noopener noreferrer">◆ Agentlas</a>
+    <div class="login-panel"><span class="login-eyebrow">CREATOR SOURCE GRAPH</span><h1 id="login-title">Follow the sources.<br>Find the conversation.</h1><p>Sign in with Agentlas to open your local research workspace.</p><a id="sign-in-button" class="primary-button login-button" href="/auth/login?returnTo=/">Sign in with Agentlas <span aria-hidden="true">↗</span></a><div id="login-status" role="status" aria-live="polite">Checking your session…</div></div>
+    <button id="login-quit-button" class="login-quit text-button" type="button">Quit local app</button>
+  </section>
+  <div id="authenticated-app" class="authenticated-app" hidden>
   <header class="topbar">
     <a class="wordmark" href="/" aria-label="Creator Source Graph">◆ <span>creator graph</span></a>
     <form id="analyze-form" class="url-form"><label class="sr-only" for="input-url">Public product URL</label><svg aria-hidden="true"><use href="#icon-link"/></svg><input id="input-url" type="text" placeholder="Enter a product URL" autocomplete="off" spellcheck="false" required><button id="analyze-button" type="submit" title="Prepare research" aria-label="Prepare research"><svg aria-hidden="true"><use href="#icon-arrow"/></svg></button></form>
+    <div class="account-menu"><span id="account-name"></span><button id="logout-button" class="text-button" type="button">Sign out</button></div>
     <button id="connections-button" class="connect-button" type="button" title="Connect your existing AI host">Connect AI</button>
   </header>
   <section id="strategy-strip" class="strategy-strip" aria-label="Source opportunities"><span class="strategy-label">Sources</span><div id="strategy-logos"></div><span id="mode-indicator" class="mode-indicator" title="Enter a public product URL">○</span></section>
@@ -52,6 +59,8 @@
     <div id="scope-counters" class="scope-counters"></div>
     <div class="tool-actions"><button id="rank-button" class="icon-button" title="Source rankings" aria-label="Source rankings"><svg><use href="#icon-grid"/></svg></button><button id="mentions-button" class="icon-button" title="Brand mentions" aria-label="Brand mentions"><svg><use href="#icon-people"/></svg></button><button id="import-button" class="icon-button" title="Import public metadata JSON" aria-label="Import JSON"><svg><use href="#icon-upload"/></svg></button><a id="draft-download" href="/api/drafts" download="placement-drafts.md" class="icon-button" title="Download drafts" aria-label="Download drafts"><svg><use href="#icon-download"/></svg></a><button id="inference-button" class="icon-button" title="Show inferred paths" aria-label="Show inferred paths" aria-pressed="false"><svg><use href="#icon-eye"/></svg></button><button id="refresh-button" class="icon-button" title="Refresh local workspace" aria-label="Refresh"><svg><use href="#icon-refresh"/></svg></button><button id="coverage-button" class="icon-button" title="Research coverage" aria-label="Research coverage"><svg><use href="#icon-info"/></svg></button><button id="quit-button" class="icon-button" title="Quit local app" aria-label="Quit local app"><svg><use href="#icon-close"/></svg></button></div>
   </footer>
+  </div>
+  <aside id="hover-card" class="hover-card" role="dialog" aria-label="Public source preview" hidden></aside>
   <dialog id="inspector" class="inspector"><button class="close-button icon-button" data-close title="Close" aria-label="Close"><svg><use href="#icon-close"/></svg></button><div id="inspector-body"></div></dialog>
   <dialog id="import-dialog" class="import-dialog"><button class="close-button icon-button" data-close title="Close" aria-label="Close"><svg><use href="#icon-close"/></svg></button><form id="import-form"><label for="import-json">Import public metadata</label><textarea id="import-json" rows="12" placeholder='{"records": []}' required></textarea><div class="dialog-actions"><button class="icon-button" type="submit" title="Import" aria-label="Import"><svg><use href="#icon-arrow"/></svg></button><a class="icon-button" href="/api/export" download="creator-source-graph.json" title="Export workspace JSON" aria-label="Export workspace JSON"><svg><use href="#icon-download"/></svg></a></div><div id="import-status" role="status" aria-live="polite"></div></form></dialog>
 </body></html>

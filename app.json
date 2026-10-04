@@ -2,7 +2,7 @@
   "schema": "agentlas.app/v0.1",
   "id": "creator-source-graph",
   "name": "Creator Source Graph",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "tagline": "Your AI researches. Your sources stay connected.",
   "description": "Open-source creator discovery using your subscribed AI host's web search, saved as a local source graph.",
   "appType": "agent-app",
@@ -26,5 +26,6 @@
   },
   "skill": "skills/creator-source-graph/SKILL.md",
   "apiKeysRequired": false,
+  "authentication": { "provider": "Agentlas", "scope": "app_identity", "localWorkspacePerAccount": true },
   "readiness": "public-beta"
 }
