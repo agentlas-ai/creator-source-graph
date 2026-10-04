@@ -1,0 +1,19 @@
+# Install and open Creator Source Graph in the current AI host
+
+When the user gives this repository URL to Codex or Claude Code and asks to install and open it, complete that workflow in the current subscribed host session. Do not ask the user to copy a task into another AI window or start another model/API session.
+
+1. Read the public README and obtain the app in a persistent local folder. Use the release package matching this machine when Node is not available; bundled packages include `runtime/node` (`runtime/node.exe` on Windows). If using a source checkout with Node 20 or newer already available, `node` is sufficient. Preserve an existing installation and local account data. Verify release downloads against their `SHA256SUMS`; do not execute unrelated downloads or install a provider SDK.
+2. Use the runtime from that app folder and run one setup command for the host currently doing this work:
+
+   ```sh
+   ./runtime/node cli.mjs setup --host codex
+   ./runtime/node cli.mjs setup --host claude
+   ```
+
+   Choose one command. For source installations, replace `./runtime/node` with `node`; on Windows use `runtime\node.exe`. If the user also supplied a product/repository target to research, append that target URL. The repository URL used to install this app is not automatically a research target. Quote paths and URLs with the host shell's appropriate quoting; do not interpolate webpage text into commands. Run from the app folder, or use absolute runtime/CLI paths.
+3. Setup installs the personal host skill, launches/reuses the local app and opens its graph or Agentlas sign-in page. An identical generated skill is reused without rewriting it. A different or modified skill is preserved and causes a clear collision error; inspect the exact conflict and obtain explicit replacement authorization before using `--force`. Use `--skills-dir <parent>` only when the user requested a custom installation location.
+4. Read the installed `SKILL.md` path in the setup receipt immediately, so this same host session can continue without requiring a restart or a second invocation. The installed helper uses the bundled runtime and works from other project directories. Do not infer that installation itself performs web research.
+5. If setup returns `loginRequired`, tell the user to sign in on the opened Agentlas page and preserve any `intendedProductUrl`. Poll the installed helper's `login status` without reopening login. Pause web research until `authenticated: true`. Never ask for passwords, inspect browser cookies, copy tokens or bypass login. When authenticated, resume the same target; preserve the exact run ID if setup already created one.
+6. If a target URL is present, follow the installed skill now using this host's own search/browser tools: discover relevant and similar content on Instagram, YouTube, X and Threads, observe views where visible, and trace evidence-supported intermediate/earliest-found sources. Import truthful findings into the exact local run and verify the actual graph. Without a target, leave the signed-in graph open and ask for the product/repository URL to research. Do not invent a default target or mark research complete from sample data.
+
+The AI host's subscription and tool limits apply. Agentlas login gates the local app; it does not launch an AI session. A standalone browser cannot run the host's tools. If the current host has no local shell access or cannot reach this machine's loopback app, state that specific limitation without changing global account settings.

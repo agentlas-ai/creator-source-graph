@@ -1,21 +1,33 @@
 # Creator Source Graph
 
-**Creator discovery and source provenance, powered by the AI coding agent you already use.**
+**Find creator content on Instagram, YouTube, X and Threads, then trace its sources.**
 
-Creator Source Graph is an open-source AI agent app for web research. Give its Codex skill or Claude Code skill a product URL, then inspect creators, public content, and cited sources in a local browser graph. Follow the evidence behind a discovery instead of keeping a flat list of links.
+Creator Source Graph is an open-source local research app for Codex and Claude Code. Your existing AI host discovers public content, checks available view counts, follows source links, and saves a browser graph on your computer. No model or platform API keys are required for the skill workflow.
 
-Your existing AI host supplies reasoning, web search, and browser tools. The app stores structured observations and renders the graph locally. You do not need a separate model subscription or YouTube, X, Instagram, or Brave API keys for the skill workflow.
+![Creator Source Graph browser workspace](assets/creator-source-graph.png)
 
-![Creator Source Graph showing creators, public content, source links, and research coverage](assets/creator-source-graph.png)
+## Install and open with your AI host
 
-## What you can do
+In a local Codex or Claude Code session with shell, web search and browser tools, send:
 
-- Research creators publishing about a product, category, or related problem.
-- Follow public links from creator content to projects, articles, papers, and other sources.
-- Hover graph nodes and platform logos for original links, short summaries, and collection status.
-- Keep observed links separate from inferred relationships and search discoveries.
-- Explore direct and additional second-hop creator paths within your collected sample.
-- Export structured research as JSON for review or further analysis.
+```text
+https://github.com/agentlas-ai/creator-source-graph
+Install and open this app. Then research creators covering https://agentlas.cloud.
+```
+
+The host reads [the setup instructions](AGENTS.md), installs the app and personal skill, opens the browser and prompts you to sign in with Agentlas. After authentication, it continues the original research target. If sign-in is still pending, it checks login status before continuing; it does not claim research has already run.
+
+From the obtained app folder, the host runs `./runtime/node cli.mjs setup --host codex <target-url>` or `./runtime/node cli.mjs setup --host claude <target-url>` (use `node` for source installations or `runtime\node.exe` on Windows). It reads the installed skill from the setup receipt and continues in the same session. Without a research target, setup opens the app and asks what to investigate; the installation repository URL is not automatically the target.
+
+Your host supplies reasoning, search and browser execution. Its existing subscription, tool availability, permissions and usage limits apply. Installing the app does not add missing host tools. A standalone browser cannot perform AI research by itself, and a cloud-only host cannot reach this machine's loopback app.
+
+## Read the graph from left to right
+
+- **Left — discover content.** Start with Instagram, YouTube, X and Threads. Inspect each post, creator, observation date and available views. Rank confirmed views within each platform; unknown views remain unknown, and likes or search snippets are not substituted for views. This is a bounded discovery sample, not a global popularity ranking.
+- **Middle — trace intermediate sources.** Follow explicit hyperlinks or URL citations from a post to projects, articles, papers and other material, then continue upstream. Inspect each connection's supporting page.
+- **Right — inspect the earliest source found.** Compare the upstream sources discovered in this investigation. A terminal node or early publication date does not prove the world's first origin. A possible source relationship supported by semantic and chronological evidence remains labelled **inferred**, with its rationale and evidence, separate from explicit links.
+
+Hover nodes and platform logos for original URLs, short summaries and collection status. Export JSON to review the investigation. Source scores describe paths in the collected sample, not audience overlap, market share or conversion.
 
 ## Download or run from source
 
@@ -45,7 +57,7 @@ No npm dependencies need to be installed. The launcher starts the local server a
 
 The first skill invocation opens the Agentlas login screen. After you sign in, the browser returns to Creator Source Graph and the AI continues with the product URL you supplied. If login takes longer than the host's wait, the skill checks login status and resumes the same request.
 
-Agentlas login identifies your local workspace. It does not replace your Codex or Claude Code subscription. No model or search API key is required. Graphs stay on your computer and are separated by Agentlas account; signing in on another computer does not download a cloud copy.
+Agentlas login identifies your local workspace. It does not replace your Codex or Claude Code subscription. No model or search API key is required. Graphs stay on your computer and are separated by Agentlas account. The app does not upload your workspace to a central graph service; signing in on another computer does not download a cloud copy.
 
 Use **Sign out** to return to the login screen. The app keeps your local graph for your next sign-in. On upgrade, an existing unassigned workspace is preserved and copied into the first signed-in account's local workspace; subsequent accounts start separately.
 
@@ -113,6 +125,7 @@ Run commands from the app directory:
 
 | Command | Purpose |
 | --- | --- |
+| `node cli.mjs setup --host codex [target-url]` | Install or reuse the current host skill, open sign-in/graph and preserve the research target. Use `claude` for Claude Code. |
 | `node cli.mjs install --host both` | Install the skill for Codex and Claude Code. |
 | `node cli.mjs login --wait-seconds 90` | Open Agentlas login and wait for sign-in. |
 | `node cli.mjs login status` | Check login without reopening a browser. |
@@ -127,47 +140,17 @@ A run records research progress; starting one does not launch or purchase an AI 
 
 ## Structured batch input
 
-The skill handles JSON submission for normal use. For a custom host workflow, save a batch as `batch.json` and submit it to the run ID returned by `start`:
+The skill handles submissions for normal use. For custom host workflows, [the import schema](skills/creator-source-graph/references/import-schema.md) documents bounded records, view-count provenance, platform coverage and relationship evidence. Submit to the exact run ID returned by `start`:
 
 ```sh
 node cli.mjs submit <runId> batch.json
 ```
 
-This is a schema example, not a research finding. Replace its URL, title, timestamp, query, and provenance with information actually returned by your host tools:
-
-```json
-{
-  "status": "partial",
-  "note": "One search candidate; original page not yet opened.",
-  "records": [
-    {
-      "url": "https://example.com/",
-      "role": "source",
-      "title": "Example search candidate",
-      "observedAt": "2026-10-04T00:00:00Z",
-      "collection": {
-        "method": "agent-search",
-        "evidenceUrl": "https://example.com/",
-        "provenance": "Host web search result"
-      }
-    }
-  ],
-  "coverage": [
-    {
-      "platform": "web",
-      "status": "partial",
-      "query": "product category creators",
-      "note": "Candidate found; original page inspection pending."
-    }
-  ]
-}
-```
-
-Use `agent-search` for discovery candidates without original-page links, mentions, or summaries. Use `agent-browser` only after opening the exact page; its `evidenceUrl` must match the record URL. An optional `summary` is a one-sentence AI paraphrase of that opened page, at most 280 characters. Creator content records also need `creator.name`. Keep links to original observed hrefs, and use `null` or omit unavailable metrics. [Full input schema](skills/creator-source-graph/references/import-schema.md) documents the fields and coverage rules. A partial submission closes that run; start a new run to continue collecting.
+Use search-only records for discovery candidates. Record original-page observations only after opening the exact source. Preserve unknown counts as absent or null. Check the exact run status before retrying a submission whose outcome is uncertain.
 
 ## Reading the evidence
 
-An explicit link records a public connection. It does **not** prove influence, endorsement, that a creator read the destination, or when the link first appeared. Inferred relationships must include a rationale and remain distinct from observed links.
+An explicit link records a public connection. It does **not** prove influence, endorsement, that a creator read the destination, or when the link first appeared. Inferred source candidates require recorded semantic and chronological evidence and a rationale. They remain hypotheses, separate from explicit citation paths; neither kind establishes a global first origin.
 
 Search results are discovery leads, not proof of a page's full contents. Creator identity, publication dates, platform access, and view counts may be unavailable. Unknown values remain unknown rather than becoming zero. Private conversations, closed communities, and inaccessible content are outside the visible sample.
 

@@ -7,6 +7,7 @@
     <symbol id="logo-youtube" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="5" fill="#ff0033"/><path d="m10 8 6 4-6 4z" fill="white"/></symbol>
     <symbol id="logo-instagram" viewBox="0 0 24 24"><rect x="1" y="1" width="22" height="22" rx="6" fill="#d63881"/><rect x="5" y="5" width="14" height="14" rx="4" fill="none" stroke="white" stroke-width="1.8"/><circle cx="12" cy="12" r="3.5" fill="none" stroke="white" stroke-width="1.8"/><circle cx="17" cy="7" r="1" fill="white"/></symbol>
     <symbol id="logo-x" viewBox="0 0 24 24"><path fill="currentColor" d="M3 2h5l5 7.1L19.2 2H22l-7.7 9L22 22h-5l-5.7-8.1L4.3 22H1.5l8.5-10L3 2Zm4 2H6l12 16h1L7 4Z"/></symbol>
+    <symbol id="logo-threads" viewBox="0 0 24 24"><rect x="1" y="1" width="22" height="22" rx="6" fill="#222b27"/><path d="M17.6 8.2c-1.8-5.3-9.6-4.4-10.9 1.1-1.6 6.6 2 11 7.3 9.8 4.7-1 5.5-6.7 1.2-8.2-5.5-2-8.4 3.8-3.1 4.3 3.6.3 4.2-5.8 1.5-7.1-1.3-.6-2.6-.2-3.4.5" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round"/></symbol>
     <symbol id="logo-hackernews" viewBox="0 0 24 24"><rect x="1" y="1" width="22" height="22" rx="3" fill="#ff6600"/><path d="m6 5 6 8 6-8m-6 8v7" stroke="white" fill="none" stroke-width="2"/></symbol>
     <symbol id="logo-anthropic" viewBox="0 0 24 24"><rect x="1" y="1" width="22" height="22" rx="3" fill="#d6c3ae"/><path d="m5 19 5-14 5 14M7 14h6m2-9 5 14" stroke="#27241e" stroke-width="2" fill="none"/></symbol>
     <symbol id="logo-arxiv" viewBox="0 0 24 24"><rect x="1" y="1" width="22" height="22" rx="3" fill="#b72b2c"/><path d="m6 5 12 14M18 5 6 19" stroke="white" stroke-width="2.5"/><path d="m7 3 10 18" stroke="#e9bcbd" stroke-width="1"/></symbol>
@@ -32,33 +33,37 @@
   <div id="authenticated-app" class="authenticated-app" hidden>
   <header class="topbar">
     <a class="wordmark" href="/" aria-label="Creator Source Graph">◆ <span>creator graph</span></a>
-    <form id="analyze-form" class="url-form"><label class="sr-only" for="input-url">Public product URL</label><svg aria-hidden="true"><use href="#icon-link"/></svg><input id="input-url" type="text" placeholder="Enter a product URL" autocomplete="off" spellcheck="false" required><button id="analyze-button" type="submit" title="Prepare research" aria-label="Prepare research"><svg aria-hidden="true"><use href="#icon-arrow"/></svg></button></form>
+    <div class="target-context"><svg aria-hidden="true"><use href="#icon-link"/></svg><a id="target-url" aria-label="Current research target" target="_blank" rel="noopener noreferrer">Research starts in your AI</a></div>
     <div class="account-menu"><span id="account-name"></span><button id="logout-button" class="text-button" type="button">Sign out</button></div>
-    <button id="connections-button" class="connect-button" type="button" title="Connect your existing AI host">Connect AI</button>
+    <button id="help-button" class="icon-button" type="button" aria-label="Help" title="Help"><svg><use href="#icon-info"/></svg></button>
   </header>
-  <section id="strategy-strip" class="strategy-strip" aria-label="Source opportunities"><span class="strategy-label">Sources</span><div id="strategy-logos"></div><span id="mode-indicator" class="mode-indicator" title="Enter a public product URL">○</span></section>
   <section id="research-session" class="research-session" aria-label="Research session" hidden>
-    <div class="session-info"><strong id="run-status" role="status" aria-live="polite"></strong><span id="run-url"></span><span id="run-progress"></span></div>
-    <div class="session-actions"><button id="copy-task-button" class="text-button" type="button">Copy AI task</button><button id="stop-run-button" class="text-button stop-button" type="button">Stop research</button><button id="history-button" class="icon-button" title="Research history" aria-label="Research history"><svg aria-hidden="true"><use href="#icon-grid"/></svg></button></div>
+    <div class="session-info"><strong id="run-status" role="status" aria-live="polite"></strong><span id="run-progress"></span><span id="run-mode">Research runs in your AI</span></div>
+    <div class="session-actions"><button id="stop-run-button" class="text-button stop-button" type="button">Stop research</button><button id="history-button" class="icon-button" title="Research history" aria-label="Research history"><svg><use href="#icon-grid"/></svg></button></div>
   </section>
   <main class="workspace">
-    <aside class="content-rail" aria-label="Related content">
-      <div id="topic-chips" class="topic-chips"></div>
+    <aside class="content-rail" aria-labelledby="content-heading">
+      <div class="lane-heading"><span class="step-number">1</span><div><h1 id="content-heading">Find content</h1><p>Highest views within each platform</p></div></div>
       <div class="platform-filters" aria-label="Content platform">
-        <button class="platform-filter active" data-platform="all" aria-label="All related content" title="Platform-specific public metrics"><svg><use href="#icon-grid"/></svg></button>
-        <button class="platform-filter" data-platform="youtube" aria-label="YouTube content" title="YouTube"><svg><use href="#logo-youtube"/></svg></button>
-        <button class="platform-filter" data-platform="instagram" aria-label="Instagram content" title="Instagram"><svg><use href="#logo-instagram"/></svg></button>
-        <button class="platform-filter" data-platform="x" aria-label="X content" title="X"><svg><use href="#logo-x"/></svg></button>
-        <button class="platform-filter" data-platform="hackernews" aria-label="Hacker News content" title="Hacker News"><svg><use href="#logo-hackernews"/></svg></button>
+        <button class="platform-filter" data-platform="instagram" aria-label="Instagram content" aria-pressed="false"><svg><use href="#logo-instagram"/></svg><span>Instagram</span></button>
+        <button class="platform-filter" data-platform="youtube" aria-label="YouTube content" aria-pressed="false"><svg><use href="#logo-youtube"/></svg><span>YouTube</span></button>
+        <button class="platform-filter" data-platform="x" aria-label="X content" aria-pressed="false"><svg><use href="#logo-x"/></svg><span>X</span></button>
+        <button class="platform-filter" data-platform="threads" aria-label="Threads content" aria-pressed="false"><svg><use href="#logo-threads"/></svg><span>Threads</span></button>
       </div>
-      <div id="content-carousel" class="content-carousel" role="list" aria-label="Related public content"></div>
+      <div id="content-carousel" class="content-carousel" role="list" aria-label="Discovered social content"></div>
     </aside>
-    <section class="graph-stage" aria-label="Content source graph"><svg id="source-graph" viewBox="0 0 1000 720" role="group" aria-label="Public content and source links"></svg><div id="empty-state" class="empty-state"><h1>Find the sources behind the conversation.</h1><p>Research public content with the AI you already use.</p><button id="empty-connect-button" class="primary-button" type="button">Connect your AI</button></div><div id="graph-loading" class="loading" role="status" aria-label="Preparing research" hidden><span></span><span></span><span></span></div><div id="graph-status" class="graph-status" role="status" aria-live="polite"></div></section>
+    <section class="graph-stage" aria-labelledby="trace-heading">
+      <div class="lane-heading"><span class="step-number">2</span><div><h2 id="trace-heading">Trace the sources</h2><p>Content → intermediate sources → earliest found</p></div></div>
+      <div class="trace-controls"><span id="trace-selection">Choose a content item to follow its sources</span><button id="inference-button" class="evidence-toggle" aria-pressed="true" type="button">Inferred candidates</button></div>
+      <div class="graph-canvas"><svg id="source-graph" viewBox="0 0 720 560" role="group" aria-label="Reverse source paths"></svg><div id="empty-state" class="empty-state"><h2>Follow the sources behind the content.</h2><p>Ask your AI to find content and trace its sources. Results arrive here.</p></div></div>
+      <div class="trace-legend"><span><i class="solid-line"></i>Observed link</span><span><i class="dashed-line"></i>Inferred candidate</span><span id="trace-count"></span></div>
+    </section>
+    <aside class="origin-rail" aria-labelledby="origin-heading">
+      <div class="lane-heading"><span class="step-number">3</span><div><h2 id="origin-heading">Earliest found</h2><p>Results within the collected paths</p></div></div>
+      <div id="origin-results" class="origin-results" role="list" aria-label="Earliest source results"></div>
+    </aside>
   </main>
-  <footer class="graph-toolbar">
-    <div id="scope-counters" class="scope-counters"></div>
-    <div class="tool-actions"><button id="rank-button" class="icon-button" title="Source rankings" aria-label="Source rankings"><svg><use href="#icon-grid"/></svg></button><button id="mentions-button" class="icon-button" title="Brand mentions" aria-label="Brand mentions"><svg><use href="#icon-people"/></svg></button><button id="import-button" class="icon-button" title="Import public metadata JSON" aria-label="Import JSON"><svg><use href="#icon-upload"/></svg></button><a id="draft-download" href="/api/drafts" download="placement-drafts.md" class="icon-button" title="Download drafts" aria-label="Download drafts"><svg><use href="#icon-download"/></svg></a><button id="inference-button" class="icon-button" title="Show inferred paths" aria-label="Show inferred paths" aria-pressed="false"><svg><use href="#icon-eye"/></svg></button><button id="refresh-button" class="icon-button" title="Refresh local workspace" aria-label="Refresh"><svg><use href="#icon-refresh"/></svg></button><button id="coverage-button" class="icon-button" title="Research coverage" aria-label="Research coverage"><svg><use href="#icon-info"/></svg></button><button id="quit-button" class="icon-button" title="Quit local app" aria-label="Quit local app"><svg><use href="#icon-close"/></svg></button></div>
-  </footer>
+  <footer class="graph-toolbar"><div id="scope-counters" class="scope-counters"></div><div id="graph-status" class="graph-status" role="status" aria-live="polite"></div><div class="tool-actions"><a id="export-download" href="/api/export" download="creator-source-graph.json" class="text-button">Export results</a><button id="refresh-button" class="icon-button" title="Refresh" aria-label="Refresh"><svg><use href="#icon-refresh"/></svg></button><button id="coverage-button" class="icon-button" title="Research coverage" aria-label="Research coverage"><svg><use href="#icon-info"/></svg></button><button id="quit-button" class="icon-button" title="Quit local app" aria-label="Quit local app"><svg><use href="#icon-close"/></svg></button></div></footer>
   </div>
   <aside id="hover-card" class="hover-card" role="dialog" aria-label="Public source preview" hidden></aside>
   <dialog id="inspector" class="inspector"><button class="close-button icon-button" data-close title="Close" aria-label="Close"><svg><use href="#icon-close"/></svg></button><div id="inspector-body"></div></dialog>

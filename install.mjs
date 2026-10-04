@@ -17,6 +17,10 @@ const cmdQuote = value => {
   if (/["\r\n]/.test(value)) throw new Error('Windows bridge paths cannot contain quotes or line breaks.');
   return '"' + value.replaceAll('%', '%%') + '"';
 };
+const wrappers = () => ({
+  'scripts/run.sh': '#!/bin/sh\nset -eu\nbridge_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)\nexec ' + shellQuote(process.execPath) + ' "$bridge_dir/run.mjs" "$@"\n',
+  'scripts/run.cmd': '@echo off\r\nsetlocal DisableDelayedExpansion\r\n' + cmdQuote(process.execPath) + ' "%~dp0run.mjs" %*\r\nexit /b %errorlevel%\r\n',
+});
 
 async function exists(path) {
   try { return await lstat(path); } catch (error) { if (error.code === 'ENOENT') return null; throw error; }
@@ -29,6 +33,26 @@ async function rejectSymlinkParents(path) {
     const entry = await exists(current);
     if (entry?.isSymbolicLink()) throw new Error(`Refusing installation through a symlink: ${current}`);
   }
+}
+
+async function reusable(target, source, appRoot) {
+  try {
+    const marker = join(target, '.bridge.json');
+    const info = await lstat(marker);
+    if (!info.isFile() || info.isSymbolicLink() || info.size > 16384) return false;
+    const config = JSON.parse(await readFile(marker, 'utf8'));
+    if (config.schema !== 'creator-source-graph.bridge.v1' || config.appRoot !== appRoot || config.nodeExecutable !== process.execPath) return false;
+    for (const file of SKILL_FILES) {
+      const installed = join(target, file), entry = await lstat(installed);
+      if (!entry.isFile() || entry.isSymbolicLink() || !(await readFile(installed)).equals(await readFile(join(source, file)))) return false;
+    }
+    for (const [file, expected] of Object.entries(wrappers())) {
+      const entry = await lstat(join(target, file));
+      if (!entry.isFile() || entry.isSymbolicLink() || await readFile(join(target, file), 'utf8') !== expected) return false;
+      if (file.endsWith('.sh') && process.platform !== 'win32' && !(entry.mode & 0o111)) return false;
+    }
+    return true;
+  } catch { return false; }
 }
 
 export async function installFromArgs(args, appRoot = SOURCE_ROOT) {
@@ -57,10 +81,18 @@ export async function installFromArgs(args, appRoot = SOURCE_ROOT) {
     await rejectSymlinkParents(target.path);
     const present = await exists(target.path);
     if (present && !present.isDirectory()) throw new Error(`Target is not a skill directory: ${target.path}`);
-    if (present && !force) throw new Error(`Skill already exists at ${target.path}. Review it first; --force replaces this skill folder.`);
+    if (present && !force) {
+      target.reused = await reusable(target.path, source, appRoot);
+      if (!target.reused) throw new Error(`A different or modified skill already exists at ${target.path}. Review it first; --force replaces this skill folder.`);
+    }
   }
   const installed = [];
   for (const target of targets) {
+    if (target.reused) {
+      if (!await reusable(target.path, source, appRoot)) throw new Error('The installed skill changed during setup. Review it before retrying.');
+      installed.push({ host: target.host, path: target.path, helper: join(target.path, 'scripts', process.platform === 'win32' ? 'run.cmd' : 'run.sh'), reused: true });
+      continue;
+    }
     const parent = dirname(target.path);
     await mkdir(parent, { recursive: true });
     const temp = await mkdtemp(join(parent, '.creator-source-graph-install-'));
@@ -73,29 +105,39 @@ export async function installFromArgs(args, appRoot = SOURCE_ROOT) {
       await writeFile(join(temp, '.bridge.json'), JSON.stringify({
         schema: 'creator-source-graph.bridge.v1', appRoot, nodeExecutable: process.execPath,
       }, null, 2) + '\n', { mode: 0o600 });
-      await writeFile(join(temp, 'scripts', 'run.sh'),
-        '#!/bin/sh\nset -eu\nbridge_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)\nexec ' + shellQuote(process.execPath) + ' "$bridge_dir/run.mjs" "$@"\n', { mode: 0o755 });
-      await writeFile(join(temp, 'scripts', 'run.cmd'),
-        '@echo off\r\nsetlocal DisableDelayedExpansion\r\n' + cmdQuote(process.execPath) + ' "%~dp0run.mjs" %*\r\nexit /b %errorlevel%\r\n');
+      for (const [file, content] of Object.entries(wrappers())) await writeFile(join(temp, file), content, { mode: file.endsWith('.sh') ? 0o755 : 0o644 });
       // Recheck after staging so a concurrent installation cannot silently overwrite a new skill.
       await rejectSymlinkParents(target.path);
       if (await exists(target.path)) {
-        if (!force) throw new Error(`Target appeared during installation: ${target.path}`);
+        if (!force) {
+          if (await reusable(target.path, source, appRoot)) {
+            installed.push({ host: target.host, path: target.path, helper: join(target.path, 'scripts', process.platform === 'win32' ? 'run.cmd' : 'run.sh'), reused: true });
+            continue;
+          }
+          throw new Error(`Target appeared during installation: ${target.path}`);
+        }
         backup = temp + '-previous';
         await rename(target.path, backup);
       }
       try { await rename(temp, target.path); }
-      catch (error) { if (backup) await rename(backup, target.path); throw error; }
+      catch (error) {
+        if (!backup && ['EEXIST', 'ENOTEMPTY'].includes(error.code) && await reusable(target.path, source, appRoot)) {
+          installed.push({ host: target.host, path: target.path, helper: join(target.path, 'scripts', process.platform === 'win32' ? 'run.cmd' : 'run.sh'), reused: true });
+          continue;
+        }
+        if (backup) await rename(backup, target.path);
+        throw error;
+      }
       if (backup) await rm(backup, { recursive: true });
       const receipt = JSON.parse(await readFile(join(target.path, '.bridge.json'), 'utf8'));
       if (receipt.appRoot !== appRoot) throw new Error('Installed bridge verification failed.');
-      installed.push({ host: target.host, path: target.path, helper: join(target.path, 'scripts', process.platform === 'win32' ? 'run.cmd' : 'run.sh') });
+      installed.push({ host: target.host, path: target.path, helper: join(target.path, 'scripts', process.platform === 'win32' ? 'run.cmd' : 'run.sh'), reused: false });
     } finally { await rm(temp, { recursive: true, force: true }); }
   }
   return {
-    installed, version: '0.5.0',
+    installed, version: '0.6.0',
     invocation: { codex: '$creator-source-graph <url>', claude: '/creator-source-graph <url>' },
-    note: 'Open or reload the local host session to discover the skill. The bridge uses this app folder and Node runtime; reinstall if either moves. No account settings or provider credentials were changed.',
+    note: 'The current AI host can read the installed SKILL.md now and continue in this session. New sessions can discover the personal skill normally. The bridge uses this app folder and Node runtime; reinstall if either moves. No account settings or provider credentials were changed.',
   };
 }
 

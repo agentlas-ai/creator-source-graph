@@ -10,17 +10,27 @@ import { sourceDetail } from './lib/graph.mjs';
 import { collectBatch } from './lib/collector.mjs';
 import { inputUrl, researchGraph } from './lib/audience.mjs';
 import { platformConnections, collectSocialUrl, socialPlatform } from './lib/social.mjs';
-import { startResearchRun, importResearchRun, transitionResearchRun } from './lib/research.mjs';
+import { RESEARCH_PLATFORMS, startResearchRun, importResearchRun, transitionResearchRun } from './lib/research.mjs';
 import { dataDirectory } from './lib/runtime.mjs';
 import { openAuth } from './lib/auth.mjs';
 
 export const ROOT = path.dirname(fileURLToPath(import.meta.url));
-export const VERSION = '0.5.0';
+export const VERSION = '0.6.0';
 const STATIC = new Map([['/', 'graph.html'], ['/index.html', 'graph.html'], ['/app.js', 'graph.js'], ['/style.css', 'graph.css']]);
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' };
 function json(res, status, value) {
   res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
   res.end(JSON.stringify(value));
+}
+function bindAccount(req, res, identity) {
+  const account = identity.authenticated ? encodeURIComponent(identity.user.id) : null;
+  if (account !== null) res.setHeader('x-creator-account-id', account);
+  const requested = req.headers['x-creator-account-id'];
+  if (requested !== undefined && requested !== account) {
+    json(res, 409, { accountChanged: true, error: 'The Agentlas account changed. Refresh sign-in status before continuing.' });
+    return false;
+  }
+  return true;
 }
 async function body(req) {
   let text = '', bytes = 0;
@@ -59,11 +69,11 @@ export async function createApp({ dataDir = dataDirectory(), seed = { records: [
   const begin = async (store, value) => {
     const url = inputUrl(value);
     const analysis = {
-      mode: 'audience', url, title: new URL(url).hostname, topics: [], labels: ['Web research'],
+      mode: 'audience', url, title: new URL(url).hostname, topics: [], labels: ['Social content → source origins'],
       contentUrls: [], sourceUrls: [], queries: [], observedAt: new Date().toISOString(),
-      platformCoverage: Object.fromEntries(['youtube', 'instagram', 'x', 'web', 'hackernews'].map(key => [key, 'waiting-for-agent'])),
+      platformCoverage: Object.fromEntries(RESEARCH_PLATFORMS.map(key => [key, 'waiting-for-agent'])),
       searchStatus: 'waiting-for-agent', matches: 0,
-      queryBasis: 'Your AI host reads the product page, searches the web, and checks original sources.'
+      queryBasis: 'Your AI host finds content on four social platforms, compares observed views, and traces intermediate and earliest found sources.'
     };
     const report = await store.update(workspace => startResearchRun(workspace, url, { analysis }));
     return { ...report, run: report.run, graph: graphData(store), attempts: [] };
@@ -99,7 +109,12 @@ export async function createApp({ dataDir = dataDirectory(), seed = { records: [
         } catch { /* The local gate shows a safe retry message; graph files remain preserved. */ }
         res.writeHead(303, { location: '/', 'cache-control': 'no-store' }); return res.end();
       }
-      if (req.method === 'POST' && url.pathname === '/api/auth/logout') { await body(req); return json(res, 200, await auth.logout()); }
+      if (req.method === 'POST' && url.pathname === '/api/auth/logout') {
+        await body(req);
+        const previousIdentity = await auth.status();
+        if (!bindAccount(req, res, previousIdentity)) return;
+        return json(res, 200, await auth.logout());
+      }
       if (req.method === 'POST' && url.pathname === '/api/shutdown') {
         json(res, 200, { status: 'stopping' });
         setTimeout(() => { server.close(); server.closeIdleConnections(); }, 100).unref();
@@ -107,16 +122,17 @@ export async function createApp({ dataDir = dataDirectory(), seed = { records: [
       }
       const identity = await auth.status();
       if (!identity.authenticated) return json(res, 401, { error: 'Sign in with Agentlas to open your graph.', loginRequired: true, authenticated: false, loginUrl: '/auth/login?returnTo=/' });
+      if (!bindAccount(req, res, identity)) return;
       const store = await accountStore(identity.user);
       if (req.method === 'GET' && url.pathname === '/api/workspace') return json(res, 200, graphData(store));
       if (req.method === 'GET' && url.pathname === '/api/platforms') return json(res, 200, { platforms: platformConnections(), provider: 'your-ai-host', apiKeysRequired: false, readOnly: true });
       if (req.method === 'GET' && url.pathname === '/api/agent/guide') return json(res, 200, {
         name: 'creator-source-graph', version: VERSION,
         hosts: [
-          { name: 'Claude Code', command: '/creator-source-graph', install: 'node cli.mjs install --host claude' },
-          { name: 'Codex', command: '$creator-source-graph', install: 'node cli.mjs install --host codex' }
+          { name: 'Claude Code', command: '/creator-source-graph', install: 'node cli.mjs setup --host claude' },
+          { name: 'Codex', command: '$creator-source-graph', install: 'node cli.mjs setup --host codex' }
         ],
-        install: 'node cli.mjs install --host both',
+        install: 'node cli.mjs setup --host both',
         packagedInstall: process.platform === 'win32' ? 'Install-Skills.bat' : process.platform === 'darwin' ? 'Install-Skills.command' : './install-skills.sh',
         requirement: 'A local AI host with web search or browser tools and shell access. Your existing plan and its limits apply.',
         apiKeysRequired: false

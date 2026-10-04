@@ -1,9 +1,9 @@
 {
   "name": "agentlas-creator-source-graph",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "license": "MIT",
   "type": "module",
-  "description": "Open-source creator discovery and source graphs powered by your subscribed AI host's web search",
+  "description": "Trace Instagram, YouTube, X and Threads content back to intermediate and earliest found sources using your AI host.",
   "repository": "github:agentlas-ai/creator-source-graph",
   "engines": {
     "node": ">=20"
@@ -15,5 +15,26 @@
     "install:skills": "node cli.mjs install",
     "check": "node --check server.mjs && node --check ui/graph.js && node --check cli.mjs"
   },
-  "files": ["server.mjs", "launch.mjs", "cli.mjs", "install.mjs", "lib/", "ui/", "skills/", "Start.command", "Install-Skills.command", "Start.bat", "Install-Skills.bat", "start.sh", "install-skills.sh", "app.json", "README.md", "LICENSE", "CHANGELOG.md", "assets/creator-source-graph.png", "assets/agentlas-sign-in.png"]
+  "files": [
+    "server.mjs",
+    "launch.mjs",
+    "cli.mjs",
+    "install.mjs",
+    "lib/",
+    "ui/",
+    "skills/",
+    "Start.command",
+    "Install-Skills.command",
+    "Start.bat",
+    "Install-Skills.bat",
+    "start.sh",
+    "install-skills.sh",
+    "app.json",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "assets/creator-source-graph.png",
+    "assets/agentlas-sign-in.png",
+    "AGENTS.md"
+  ]
 }

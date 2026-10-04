@@ -5,7 +5,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const VERSION = '0.5.0';
+const VERSION = '0.6.0';
 const MAX_BYTES = 8 * 1024 * 1024;
 const APP_ROOT = resolve(process.env.CREATOR_GRAPH_APP_ROOT || dirname(fileURLToPath(import.meta.url)));
 
@@ -63,7 +63,7 @@ async function health(origin) {
   if (![result.product, result.app, result.id].includes('creator-source-graph')) throw new Error('The local port belongs to another app.');
   if (typeof result.version !== 'string' || !/^\d+\.\d+\.\d+/.test(result.version)) throw new Error('The local app has no compatible version metadata.');
   const [major, minor] = result.version.split('.').map(Number);
-  if (major === 0 && minor < 5) throw new Error('This CLI requires Creator Source Graph 0.5.0 or newer with Agentlas sign-in. Upgrade the app, close the older app and run start again.');
+  if (major === 0 && minor < Number(VERSION.split('.')[1])) throw new Error('This CLI requires Creator Source Graph ' + VERSION + ' or newer. Upgrade the app, close the older app and run start again.');
   return result;
 }
 
@@ -186,6 +186,7 @@ function help() {
       open: 'Start/reuse app and open local graph, or Agentlas sign-in when signed out.',
       'skill-prompt [url]': 'Print a prompt to invoke the installed skill in an existing AI host.',
       'install --host codex|claude|both [--skills-dir path] [--force]': 'Install local host skills. Custom directory requires one host.',
+      'setup [target-url] --host codex|claude|both [--skills-dir path] [--force] [--wait-seconds N]': 'Install/reuse matching host skill, launch app and open Agentlas login/graph. Optional target resumes in this AI host after login.',
       'help / version': 'Print machine-readable help or version.',
     },
     localUrl: 'http://127.0.0.1:4327',
@@ -202,6 +203,45 @@ async function dispatch(argv) {
   if (command === 'install') {
     const { installFromArgs } = await import('./install.mjs');
     return installFromArgs(args, APP_ROOT);
+  }
+  if (command === 'setup') {
+    const installationArgs = [], startArgs = []; let host, waitSpecified = false;
+    for (let i = 0; i < args.length; i++) {
+      if (['--host', '--skills-dir', '--wait-seconds'].includes(args[i])) {
+        const option = args[i], value = args[++i];
+        if (!value) throw new Error('Missing value for ' + option);
+        if (option === '--wait-seconds') { startArgs.push(option, value); waitSpecified = true; }
+        else { installationArgs.push(option, value); if (option === '--host') host = value; }
+      } else if (args[i] === '--force') installationArgs.push(args[i]);
+      else if (args[i].startsWith('--')) throw new Error('Unknown setup option: ' + args[i]);
+      else startArgs.unshift(args[i]);
+    }
+    const parsed = waitOptions(startArgs, 90);
+    if (parsed.positional.length > 1) throw new Error('setup accepts at most one target URL.');
+    if (!host) throw new Error('setup needs --host codex or --host claude for the AI host performing this installation; both is also supported.');
+    if (!parsed.positional.length && !waitSpecified) startArgs.push('--wait-seconds', '0');
+    const origin = localOrigin();
+    const { installFromArgs } = await import('./install.mjs');
+    const installation = await installFromArgs(installationArgs, APP_ROOT);
+    await ensureApp(origin);
+    const before = await authStatus(origin);
+    const started = await dispatch(['start', ...startArgs]);
+    let graphBrowser = 'waiting-for-login';
+    if (!started.loginRequired) {
+      if (before.authenticated) {
+        try { await openBrowser(origin); graphBrowser = 'opened'; }
+        catch { graphBrowser = 'manual'; }
+      } else graphBrowser = 'login-return';
+    }
+    return { ...started, installation, graphBrowser,
+      hostAction: {
+        skillFiles: installation.installed.map(entry => resolve(entry.path, 'SKILL.md')),
+        action: started.loginRequired ? 'Wait for Agentlas sign-in; poll login status without opening another page, then resume this same target.' :
+          started.run ? 'Read the installed SKILL.md now and perform research in this current AI session, reusing the exact returned run ID.' :
+          'The app is open. Read the installed SKILL.md and continue when the user supplies a product/repository target URL.',
+        startsAnotherModelSession: false,
+      },
+    };
   }
   if (command === 'skill-prompt') {
     if (args.length > 1) throw new Error('skill-prompt accepts at most one URL.');

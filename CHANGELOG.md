@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.0 — 2026-10-05
+
+- Starts content discovery with Instagram, YouTube, X and Threads.
+- Ranks confirmed views within each platform and preserves unknown counts without substituting likes or snippet estimates.
+- Traces content through intermediate references to the earliest source found in the investigation, without claiming a global first origin.
+- Adds separately labelled inferred source candidates supported by semantic and chronological evidence.
+- Makes repository-to-host installation and opening the first-use path, with Agentlas sign-in followed by the original research target.
+- Keeps search and execution in the existing local Codex or Claude Code host, with account-separated local graphs and no central workspace upload.
+
 ## 0.5.0
 
 - Opens Agentlas login on first skill use, then resumes the original product research request.
