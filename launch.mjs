@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { realpathSync } from 'node:fs';
 import { mkdir, open } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -60,7 +61,7 @@ export async function launch({ headless = false, port = Number(process.env.PORT 
   if (!headless) { try { await openBrowser(url); } catch { browser = 'manual'; } }
   return { url, started, pid, browser };
 }
-if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
   try {
     const args = process.argv.slice(2); const portIndex = args.indexOf('--port');
     const result = await launch({ headless: args.includes('--headless'), port: portIndex >= 0 ? Number(args[portIndex + 1]) : undefined });
