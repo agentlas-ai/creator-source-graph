@@ -5,7 +5,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const VERSION = '0.7.0';
+const VERSION = '0.7.1';
 const MAX_BYTES = 8 * 1024 * 1024;
 const APP_ROOT = resolve(process.env.CREATOR_GRAPH_APP_ROOT || dirname(fileURLToPath(import.meta.url)));
 

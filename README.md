@@ -54,7 +54,7 @@ The host derives roughly 6–10 keyword angles from the opened target to find a 
 
 The graph opens with all collected content and its source connections visible. Click a content item to focus on its upstream path; return to the overview to compare the whole investigation.
 
-The left panel shows publication channel suggestions as icons and short names, alongside the four-platform content sample. Hover for one short summary and an original link. Select a channel to see its compact brand → channel → feed → possible AI discovery → creators route. Reference originals stay separate.
+Under **Where to publish**, the left panel shows recommended channels as logos and short names alongside the four-platform content sample. Green borders highlight those channels in the relationship graph; select a channel to focus its node. Hover for a brief summary and original, submission, feed and rules links.
 
 A project homepage, repository or paper—such as LangGraph—is a reference original, not automatically a place to distribute your product. Your own GitHub and docs hold verifiable product evidence. Real channel suggestions need a separate submission/publication route, its public rules, and an opened feed or index where new entries can be found. A community Show HN route, launch directory or newsletter tip route can be considered only when that evidence is available. Do not assume those channels supplied the traced creator posts. Suggestions without verified placement metadata remain reference-only; acceptance, creator AI use and visibility probability are unverified unless independently observed.
 

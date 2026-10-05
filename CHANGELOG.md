@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.1 — 2026-10-05
+
+- Removes the duplicate Source map heading and separate suggested-channel route to give the relationship graph more space.
+- Shows publication channels as logos and short names under Where to publish, with green borders on the matching graph nodes.
+- Keeps channel summaries and original, submission, feed and rules links in the floating preview.
+- Preserves content-path selection, the whole-graph overview and source-detail expansion without adding suggested provenance links.
+
 ## 0.7.0 — 2026-10-05
 
 - Fixes failed reanalysis when an older submission page remains in history; newly opened submission pages still require supporting evidence.
