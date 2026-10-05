@@ -5,7 +5,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const VERSION = '0.7.1';
+const VERSION = '0.7.2';
 const MAX_BYTES = 8 * 1024 * 1024;
 const APP_ROOT = resolve(process.env.CREATOR_GRAPH_APP_ROOT || dirname(fileURLToPath(import.meta.url)));
 
@@ -184,7 +184,7 @@ function help() {
       'export [runId]': 'Without ID, export portable raw workspace. With ID, return exact run, raw workspace and rendered graph nodes/edges.',
       'stop <runId> / cancel <runId>': 'Cancel this research run; does not shut down the app.',
       open: 'Start/reuse app and open local graph, or Agentlas sign-in when signed out.',
-      'skill-prompt [url]': 'Print a prompt to invoke the installed skill in an existing AI host.',
+      'skill-prompt [url]': 'Return the bundled skill bridge and optional personal-skill invocation for an existing AI host.',
       'install --host codex|claude|both [--skill-scope app|user | --skills-dir path | --skip-skills] [--force]': 'Default reads bundled skill without personal installation. Explicit user/custom scope installs; custom directory requires one host.',
       'setup [target-url] --host codex|claude|both [--skill-scope app|user | --skills-dir path | --skip-skills] [--force] [--wait-seconds N]': 'Read bundled skill by default (explicit user/custom installs), launch app and open Agentlas login/graph. Optional target resumes in this AI host after login.',
       'help / version': 'Print machine-readable help or version.',
@@ -249,7 +249,9 @@ async function dispatch(argv) {
     return {
       codex: `$creator-source-graph ${args[0] || '<product-or-repository-url>'}`,
       claude: `/creator-source-graph ${args[0] || '<product-or-repository-url>'}`,
-      note: 'Paste into an existing signed-in local host session. Tool availability and usage follow your host subscription; the app does not start a new model session.',
+      bundledSkill: resolve(APP_ROOT, 'skills', 'creator-source-graph', 'SKILL.md'),
+      bridge: { commandPrefix: [process.execPath, resolve(APP_ROOT, 'cli.mjs')] },
+      note: 'Read bundledSkill and use the absolute bridge in the existing local AI session. Slash/dollar invocations require explicit personal skill installation. Host tools and subscription limits apply; this command starts no model session.',
     };
   }
   const origin = localOrigin();

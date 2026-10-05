@@ -80,7 +80,7 @@ export async function installFromArgs(args, appRoot = SOURCE_ROOT) {
   const source = join(appRoot, 'skills', NAME);
   for (const file of SKILL_FILES) await access(join(source, file));
   const bridge = { commandPrefix: [process.execPath, join(appRoot, 'cli.mjs')], appRoot, nodeExecutable: process.execPath };
-  if (mode === 'app') return { installed: [], scope: 'app', skipped: skip, permanentInstallation: false, version: '0.7.1', skillFiles: [join(source, 'SKILL.md')], bridge, note: 'No personal skill directory was changed. Read the bundled SKILL.md and use bridge.commandPrefix for local CLI commands in this same AI session. Explicit --skill-scope user or --skills-dir opts into persistent installation.' };
+  if (mode === 'app') return { installed: [], scope: 'app', skipped: skip, permanentInstallation: false, version: '0.7.2', skillFiles: [join(source, 'SKILL.md')], bridge, note: 'No personal skill directory was changed. Read the bundled SKILL.md and use bridge.commandPrefix for local CLI commands in this same AI session. Explicit --skill-scope user or --skills-dir opts into persistent installation.' };
   const hosts = host === 'both' ? ['codex', 'claude'] : [host];
   const targets = hosts.map(kind => ({
     host: kind,
@@ -145,7 +145,7 @@ export async function installFromArgs(args, appRoot = SOURCE_ROOT) {
     } finally { await rm(temp, { recursive: true, force: true }); }
   }
   return {
-    installed, scope: mode, skipped: false, permanentInstallation: true, skillFiles: installed.map(entry => join(entry.path, 'SKILL.md')), bridge, version: '0.7.1',
+    installed, scope: mode, skipped: false, permanentInstallation: true, skillFiles: installed.map(entry => join(entry.path, 'SKILL.md')), bridge, version: '0.7.2',
     invocation: { codex: '$creator-source-graph <url>', claude: '/creator-source-graph <url>' },
     note: 'The current AI host can read the installed SKILL.md now and continue in this session. New sessions can discover the personal skill normally. The bridge uses this app folder and Node runtime; reinstall if either moves. No account settings or provider credentials were changed.',
   };

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.2 — 2026-10-06
+
+- Preserves target language, market and specific subject in research, starting with target-linked social content instead of filling niche searches with unrelated English results.
+- Retains relevant restricted-original discoveries without original-page claims and recognizes concrete YouTube embeds linked by target pages.
+- Retains local-language subject labels, uses the product's subject overlap for observed-path relevance, and prioritizes relevant Korean blogs, cafe boards and study communities over unrelated launch venues.
+- Adds investigation-only channel candidates with unknown routes left empty, dedicated Korean channel icons and dashed borders; candidates never create source paths or imply public chat indexing.
+- Supports existing Claude Code setup-token subscription environments, forwarding the token only to Claude and reporting configured tokens separately from remotely verified authentication.
+- Uses bundled skills by default without personal installation. Adds explicit user/custom installation choices and `--skip-skills`, with the absolute bridge returned for same-session use.
+
 ## 0.7.1 — 2026-10-05
 
 - Removes the duplicate Source map heading and separate suggested-channel route to give the relationship graph more space.

@@ -16,7 +16,7 @@ import { dataDirectory } from './lib/runtime.mjs';
 import { openAuth } from './lib/auth.mjs';
 
 export const ROOT = path.dirname(fileURLToPath(import.meta.url));
-export const VERSION = '0.7.1';
+export const VERSION = '0.7.2';
 const STATIC = new Map([['/', 'graph.html'], ['/analysis', 'graph.html'], ['/index.html', 'graph.html'], ['/app.js', 'graph.js'], ['/style.css', 'graph.css']]);
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' };
 function json(res, status, value) {
@@ -247,12 +247,12 @@ export async function createApp({ dataDir = dataDirectory(), seed = { records: [
       if (req.method === 'GET' && url.pathname === '/api/agent/guide') return json(res, 200, {
         name: 'creator-source-graph', version: VERSION,
         hosts: [
-          { name: 'Claude Code', command: '/creator-source-graph', install: 'node cli.mjs setup --host claude' },
-          { name: 'Codex', command: '$creator-source-graph', install: 'node cli.mjs setup --host codex' }
+          { name: 'Claude Code', command: '/creator-source-graph', install: 'node cli.mjs install --host claude --skill-scope user' },
+          { name: 'Codex', command: '$creator-source-graph', install: 'node cli.mjs install --host codex --skill-scope user' }
         ],
         install: 'node cli.mjs setup --host both',
         packagedInstall: process.platform === 'win32' ? 'Install-Skills.bat' : process.platform === 'darwin' ? 'Install-Skills.command' : './install-skills.sh',
-        requirement: 'A local AI host with web search or browser tools and shell access. Your existing plan and its limits apply.',
+        requirement: 'A local AI host with web search/browser tools and shell access. Setup uses the bundled skill by default; slash/dollar discovery needs explicit personal installation. Existing subscription limits apply.',
         apiKeysRequired: false
       });
       if (req.method === 'GET' && url.pathname === '/api/agent/runs') {

@@ -18,9 +18,9 @@ Creator Source Graph is an open-source local research app for Codex and Claude C
 2. Sign in with **Agentlas** in the browser that opens.
 3. Enter **your product or brand URL** on the home screen and choose **Analyze**. Use **Back** for another URL, or edit the address and choose **Reanalyze**.
 
-The host reads [the setup instructions](AGENTS.md), installs the app and personal skill, and opens Agentlas sign-in. Append your own product URL if you want the installing chat to begin research after sign-in.
+The host reads [the setup instructions](AGENTS.md), obtains the app and opens Agentlas sign-in. Setup uses the bundled skill by default and leaves your personal skill folders untouched. Append your own product URL to begin research in the installing chat after sign-in.
 
-From the obtained app folder, the host runs `./runtime/node cli.mjs setup --host codex <target-url>` or `./runtime/node cli.mjs setup --host claude <target-url>` (use `node` for source installations or `runtime\node.exe` on Windows). It reads the installed skill from the setup receipt and continues in the same session. Without a research target, setup opens the app and asks what to investigate; the installation repository URL is not automatically the target.
+From the obtained app folder, the host runs `./runtime/node cli.mjs setup --host codex <target-url>` or `./runtime/node cli.mjs setup --host claude <target-url>` (use `node` for source installations or `runtime\node.exe` on Windows). It reads the receipt's skill file and absolute CLI bridge, then continues in the same session. No research target means setup opens the app and asks what to investigate; the installation repository URL is not automatically the target.
 
 Your host supplies reasoning, search and browser execution. Its existing subscription, tool availability, permissions and usage limits apply. Installing the app does not install Codex or Claude Code, add missing tools, or sign you into those hosts. A cloud-only host cannot reach this machine's loopback app.
 
@@ -38,9 +38,9 @@ Agentlas 로그인 후 브랜드 URL을 넣고 Analyze를 누르면 됩니다.
 
 ![Centered brand URL home screen](assets/creator-source-graph-home.png)
 
-After Agentlas sign-in, the home screen presents a centered URL form. Enter a product or repository URL, choose **Auto**, **Codex** or **Claude**, then submit it to start actual local CLI research. The app moves to the analysis view as the investigation progresses. Use **Back** to return home for a different URL, or **View latest** to reopen the retained analysis. The analysis view also keeps its editable target URL and **Reanalyze** control. The app requires an installed local Codex or Claude Code CLI signed in with an existing subscription. Auto selects an authenticated subscription host. If the CLI is missing or signed out, the app shows an actionable error before replacing the previous result.
+After Agentlas sign-in, the home screen presents a centered URL form. Enter a product or repository URL, choose **Auto**, **Codex** or **Claude**, then submit it to start local CLI research. Use **Back** for a different URL, **View latest** for retained results, or the analysis view's editable address and **Reanalyze** control. An installed subscribed CLI is required; permanent skill installation is optional. Auto selects an available subscription route. Missing or signed-out hosts show an actionable error before replacing the previous result.
 
-Each browser analysis starts a **new local CLI research job**; it does not resume the AI chat that installed the app. The initial install-and-research request can still continue in that original chat through the installed skill. Both routes use the host’s existing subscription and tools, without provider API keys or separate provider billing.
+Each browser analysis starts a **new local CLI research job**; it does not resume the AI chat that installed the app. The initial install-and-research request can still continue in that original chat through the bundled skill and receipt bridge. Both routes use the host’s existing subscription and tools, without provider API keys or separate provider billing.
 
 The browser job follows explicit links and investigates possible source connections when paths are incomplete. Candidate connections remain estimates; missing evidence stays unresolved. There is no minimum connection count.
 
@@ -48,15 +48,15 @@ Progress appears in the app. Validated results are imported automatically with t
 
 Reanalysis creates a fresh run and retains existing source records and run history. History records run metadata; it does not restore a historical graph snapshot. Missing views, restricted platforms and incomplete source paths remain explicit in the results.
 
-The host derives roughly 6–10 keyword angles from the opened target to find a broader sample of related social content. Keywords remain tied to product evidence rather than becoming claims of market coverage. Optional `product.keywords` stores up to 16 keywords, shown as compact chips in the analysis.
+The host derives roughly 6–10 keyword angles while preserving the target's language, market and concrete subject. It starts with public social accounts/videos linked by the target, then finds other relevant creator content. For Korean niches, Korean subject searches come first; generic English material does not fill a sparse sample. Optional `product.keywords` stores up to 16 keywords as compact chips, and local-language subject labels remain in the export. Target-linked operator content is identified as an owned seed, not proof of independent creator sourcing.
 
 ## Explore the whole graph, then choose a next step
 
 The graph opens with all collected content and its source connections visible. Click a content item to focus on its upstream path; return to the overview to compare the whole investigation.
 
-Under **Where to publish**, the left panel shows recommended channels as logos and short names alongside the four-platform content sample. Green borders highlight those channels in the relationship graph; select a channel to focus its node. Hover for a brief summary and original, submission, feed and rules links.
+Under **Where to publish**, the left panel shows channels as logos and short names. A publication action has a green graph border; a channel needing investigation has a Check icon and dashed border. Select it to focus its node, or hover for a brief summary and available links. Naver Blog, Naver Cafe, Daangn Cafe and Kakao Open Chat have dedicated icons.
 
-A project homepage, repository or paper—such as LangGraph—is a reference original, not automatically a place to distribute your product. Your own GitHub and docs hold verifiable product evidence. Real channel suggestions need a separate submission/publication route, its public rules, and an opened feed or index where new entries can be found. A community Show HN route, launch directory or newsletter tip route can be considered only when that evidence is available. Do not assume those channels supplied the traced creator posts. Suggestions without verified placement metadata remain reference-only; acceptance, creator AI use and visibility probability are unverified unless independently observed.
+A project homepage, repository or paper remains reference material. Publication actions require an observed writing/submission route, current rules and a public feed/index. Investigation candidates need an opened community/publication page relevant to the target; unverified routes stay empty. Korean blogs, suitable cafe boards and study communities are considered when their subject fits. Show HN requires relevant developer/product fit. A chat invitation is a community candidate, with membership and moderation still to check; private chat messages do not become publicly indexed source evidence. Suggestions never create source relationships or guarantee creator use, indexing or exposure.
 
 - **Left — choose a starting point.** Browse suggested channels and Instagram, YouTube, X and Threads content. Available views are ordered within each platform; unknown counts remain unknown.
 - **Middle — follow sources.** Explore the whole map or select content to focus its connections. Solid links and dashed candidate connections stay visually distinct.
@@ -104,27 +104,33 @@ Use **Sign out** to return to the login screen. The app keeps your local graph f
 
 For a downloaded runtime-bundled package, use its installer helper. It uses the included Node.js runtime:
 
-| Platform | Install skills for both hosts |
+| Platform | Read bundled skill for both hosts |
 | --- | --- |
 | macOS | `Install-Skills.command` |
 | Windows | `Install-Skills.bat` |
 | Linux | `./install-skills.sh` |
 
-For a source checkout with Node.js available, install from the app directory:
+Choose how to connect from the app directory. Use `./runtime/node` for bundled downloads or `node` for source:
 
 ```sh
-node cli.mjs install --host both
+node cli.mjs setup --host codex --skip-skills
+node cli.mjs install --host both --skill-scope user
+node cli.mjs install --host claude --skills-dir ./chosen-skills
 ```
 
-Or use:
+The default/app scope and `--skip-skills` use the bundled skill without permanent installation. `--skill-scope user` explicitly opts into `~/.agents/skills` and/or `~/.claude/skills`; `--skills-dir` chooses a parent directory for one host. Existing modified skills are preserved. Browser Analyze works without any personal skill installation.
+
+For explicit personal installation you can also use:
 
 ```sh
-npm run install:skills -- --host both
+npm run install:skills -- --host both --skill-scope user
 ```
 
-Start a new AI session after installation so the host discovers the skill. Your host must have the relevant tools enabled and permission to use them. Subscription plans, tool availability, limits, and host configuration vary; installing this skill does not add unavailable search or browser capabilities.
+The installing chat reads the receipt skill immediately. Future sessions discover a personal skill after explicit installation. Search/browser tools and host subscription limits still apply.
 
-In **Claude Code**:
+Claude Code supports browser subscription sign-in and an existing `setup-token` configuration through `CLAUDE_CODE_OAUTH_TOKEN`. Start the app from the shell/AI host that already exports that variable; restart it after environment changes. The app forwards it only to Claude and does not store it or use API-key providers. CLI status identifies token configuration; the research request determines whether it is still valid. Expired/invalid authentication shows a renewal message. See [Claude Code authentication](https://code.claude.com/docs/en/authentication).
+
+After personal skill installation, in **Claude Code**:
 
 ```text
 /creator-source-graph https://agentlas.cloud
@@ -143,7 +149,7 @@ You can add a brief, such as “Find creators covering AI agent workflows and tr
 ```text
 Agentlas sign-in → home URL form
           ↓
-New subscribed local CLI job + installed skill
+New subscribed local CLI job + bundled research instructions
           ↓
 Product keywords → related social content → upstream sources
           ↓
@@ -162,8 +168,8 @@ Run commands from the app directory:
 
 | Command | Purpose |
 | --- | --- |
-| `node cli.mjs setup --host codex [target-url]` | Install or reuse the current host skill, open sign-in/graph and preserve the research target. Use `claude` for Claude Code. |
-| `node cli.mjs install --host both` | Install the skill for Codex and Claude Code. |
+| `node cli.mjs setup --host codex [target-url]` | Read the bundled skill, open sign-in/graph and preserve the target. Use `claude` for Claude Code; add `--skill-scope user` or `--skills-dir` to install. |
+| `node cli.mjs install --host both` | Return bundled skill and bridge paths without permanent installation. `--skip-skills` is explicit; `--skill-scope user` installs for both hosts. |
 | `node cli.mjs login --wait-seconds 90` | Open Agentlas login and wait for sign-in. |
 | `node cli.mjs login status` | Check login without reopening a browser. |
 | `node cli.mjs logout` | Sign out of the local app. |
