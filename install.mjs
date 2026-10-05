@@ -135,7 +135,7 @@ export async function installFromArgs(args, appRoot = SOURCE_ROOT) {
     } finally { await rm(temp, { recursive: true, force: true }); }
   }
   return {
-    installed, version: '0.6.0',
+    installed, version: '0.7.0',
     invocation: { codex: '$creator-source-graph <url>', claude: '/creator-source-graph <url>' },
     note: 'The current AI host can read the installed SKILL.md now and continue in this session. New sessions can discover the personal skill normally. The bridge uses this app folder and Node runtime; reinstall if either moves. No account settings or provider credentials were changed.',
   };

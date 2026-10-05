@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.7.0 — 2026-10-05
+
+- Fixes failed reanalysis when an older submission page remains in history; newly opened submission pages still require supporting evidence.
+- Simplifies the consumer UI to icons, names, one short summary, original links and compact channel routes; detailed rationale, confidence and collection metadata remain in exported research data.
+- Makes browser research investigate explicit references and evidence-supported inferred source candidates when link paths are incomplete; insufficient evidence produces an explained gap rather than a fabricated connection.
+- Keeps Threads post share URLs with one descriptive slug in discovery and source traces, preserving their opened URL evidence.
+- Opens a centered URL home screen after sign-in; submitting starts a new subscribed local CLI investigation and moves to the analysis view.
+- Adds Back and View latest navigation while keeping editable URL and Reanalyze controls in the analysis view.
+- Uses multiple grounded keyword angles for related social content and supports up to 16 saved product keywords shown as chips.
+- Detects installed, authenticated subscription hosts and reports missing or signed-out hosts before replacing the previous result.
+- Displays progress and automatically imports validated complete or partial results.
+- Aborts jobs on stop, sign-out or shutdown and prevents superseded or account-switched results from importing.
+- Preserves source records and run metadata across fresh investigations without historical graph restoration.
+- Separates publication-channel suggestions from reference-only project homepages, repositories and papers.
+- Requires opened public rules and discoverable feeds or indexes plus an observed rules-to-submission hyperlink for channel suggestions; keeps acceptance, creator AI use and visibility probability unverified.
+- Shows a compact brand → publication channel → possible AI collector → social creator route without treating suggested channels as proven inputs to the traced creators.
+- Keeps initial installation in the current AI chat and retains manual skill/run/import workflows without provider API keys.
+
 ## 0.6.0 — 2026-10-05
 
 - Opens the whole content-and-source graph by default; selecting content focuses its upstream path.

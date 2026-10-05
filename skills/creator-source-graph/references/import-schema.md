@@ -4,6 +4,7 @@ Submit one JSON object to the exact run ID returned by `start`:
 
 ```json
 {
+  "product": {"keywords": []},
   "records": [],
   "coverage": [
     {"platform":"instagram","status":"unavailable","query":"site:instagram.com TARGET_TOPIC","note":"Planned query not executed: no host search/browser tool available"},
@@ -18,6 +19,8 @@ Submit one JSON object to the exact run ID returned by `start`:
 ```
 
 Use actual researched records and truthful coverage when tools are available. Replace TARGET_TOPIC with the run's planned query/target topic. The example above documents unavailable tools and contains no research evidence.
+
+Optional `product` accepts only `keywords`: an array of zero to 16 nonempty strings, each at most 80 characters. Whitespace is normalized; duplicates are rejected after case and whitespace normalization. Omitted `product`, omitted `keywords`, or an empty array yields an empty keyword list for compatibility; no prior run's keywords are reused. The host should derive 6–10 distinct capability/problem/technique/integration/use-case angles from the opened target and run multiple relevant queries per available platform. Prefer a broad actual sample, normally 12–20 relevant social records and 10–15 opened source records within 40 total; fewer truthful findings remain valid. Keywords persist in `run.keywords` and `analysis.keywords` and appear in `graph.analysis.keywords`. They are product-derived research angles, not executed-query receipts. `coverage.query` separately retains the bounded actual executed-query summary unchanged; do not claim a planned keyword was searched when it was not.
 
 Each record accepts:
 
@@ -55,17 +58,20 @@ Optional `relationships` holds evidence-supported candidates, separate from expl
 
 Replace example URLs/time/text with actual observations; do not submit this as live evidence. Both endpoints and every evidence URL must match an opened `agent-browser` or app-collected record in the submitted batch or stored workspace; search-only records cannot support candidates. `rationale` is required and at most 500 characters; `evidence` requires one to five notes of at most 280 characters; `confidence` is `low` or `medium`. No more than 100 candidates per request; usually keep only 6–12 useful ones. Dates derive chronology (`consistent`, `conflict`, `unknown`) without proving influence. Conflicting chronology lowers confidence. Candidate edges remain inferred and never add source scores. “Earliest found” is limited to this observed sample, not a universal origin claim.
 
-Optional `strategies` contains zero to six prioritized AI suggestions grounded in the original product target and collected evidence. These are recommendations, never executed actions. Each item accepts only:
+Optional `strategies` contains zero to six prioritized AI suggestions grounded in the original target and collected evidence. Publication suggestions identify actual channels where new product information could be posted or listed. A project homepage, repository, framework or paper is reference evidence, not an automatic publication venue. Each item accepts only:
 
 | Field | Meaning |
 | --- | --- |
-| `priority` | Unique integer from 1 to 6. Suggestions display in ascending priority. |
-| `kind` | `read`, `build`, `create` or `investigate`; also selects the compact UI icon. |
+| `priority` | Unique integer from 1 to 6, sorted ascending. |
+| `kind` | `read`, `build`, `create` or `investigate`. Placement metadata is allowed only with `create` or `investigate`. |
 | `title` | Required nonempty short title, at most 60 characters. |
-| `summary` | Required nonempty bounded explanation, at most 280 characters. Keep inference and uncertainty explicit. |
-| `targetUrl` | Exact public URL of an opened record. Prefer original sources; an opened related social post is also valid. |
+| `summary` | Required nonempty explanation, at most 280 characters, tying the original product to the proposed channel or reference and keeping unverified conditions explicit. |
+| `targetUrl` | Public URL of an opened record; must equal `placement.channelUrl` for a placement suggestion. |
 | `evidenceUrls` | One to five unique normalized public URLs of opened records, including `targetUrl`. |
+| `placement` | Optional object with exactly `channelUrl`, `submissionUrl`, `discoveryUrl`, `rulesUrl`, `venueType`. Omitted or null metadata is reference-only. |
 
-All strategy targets and evidence must match `agent-browser`, `public-html`, `public-api` or `curated-public` records in the submitted batch or stored workspace. Search-only, manual and synthetic records cannot support a suggestion. No unknown fields, action results or execution/status fields are accepted. The app adds a stable per-run ID, `status: "suggested"`, `judgment: "ai-recommendation"` and `executed: false`; saves the sorted list to `run.strategies` and `analysis.aiStrategies`; and exposes it in `graph.analysis.aiStrategies`. Omitted or empty strategies produce an empty list. Starting a new run clears the active strategy list so recommendations from another product are never reused automatically. A recommendation based on an inferred path remains AI judgment, not proof of source origin or placement value.
+Placement URL fields are normalized public URLs without custom ports. `venueType` is `community`, `directory`, `newsletter` or `newsfeed`. Channel, discovery and rules URLs must match opened records and be included in `evidenceUrls`; shared URLs are allowed. The opened rules record must contain an actual `links` hyperlink (`kind: "hyperlink"`) to the exact normalized `submissionUrl`, even when that submission page is opened. A citation, search snippet or inferred relationship does not prove a submission route. The submission URL may be unopened (for example a login-gated form) only because the observed rules-page hyperlink grounds that route; do not bypass login or submit anything. If the submission page is opened, it must also be included in `evidenceUrls`. Read actual rules and current restrictions; these URL checks establish reported route evidence, not eligibility, acceptance, indexing, creator use or results.
+
+All strategy targets/evidence must match non-synthetic `agent-browser`, `public-html`, `public-api` or `curated-public` records in the submitted batch or stored workspace. Search-only and manual records cannot support a suggestion. Unknown fields and execution/status claims are rejected atomically. The app adds a stable per-run ID, `recommendationType: "placement"` with validated placement metadata or `"reference"` otherwise, normalized `placement` (null for reference-only suggestions), `status: "suggested"`, `judgment: "ai-recommendation"`, and `executed: false`. Sorted suggestions persist to `run.strategies` and `analysis.aiStrategies`, exposed in `graph.analysis.aiStrategies`. Old stored suggestions lacking metadata are not rewritten on read and must be displayed as references. Omitted/empty strategies clear the active list; new runs never reuse another product's suggestions. New research should return an empty list when no publication channel has adequate evidence. Recommendations based on inferred traces remain AI judgment, not confirmed creator sourcing or guaranteed distribution.
 
 The CLI uses bounded JSON and loopback HTTP only. Error output is on stderr; successful stdout is JSON. Check status/export before retrying an uncertain submit. `export` without an ID returns the portable raw workspace from `/api/export`. `export <runId>` returns `{run, workspace, graph}`: exact run status, raw workspace from `/api/export`, and the rendered graph from `/api/workspace`. Both workspace and graph cover the whole local workspace, so match the submitted record URLs and do not attribute every old graph node to this run. Inspect `graph.nodes`/`graph.edges` to verify explicit source paths. `workspace.relationships` is the optional inferred-relationship list, not the source edge list; zero inferred relationships can coexist with observed explicit links.

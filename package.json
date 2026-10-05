@@ -1,6 +1,6 @@
 {
   "name": "agentlas-creator-source-graph",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "license": "MIT",
   "type": "module",
   "description": "Trace Instagram, YouTube, X and Threads content back to intermediate and earliest found sources using your AI host.",
@@ -13,7 +13,7 @@
     "serve": "node server.mjs",
     "agent": "node cli.mjs",
     "install:skills": "node cli.mjs install",
-    "check": "node --check server.mjs && node --check ui/graph.js && node --check cli.mjs"
+    "check": "node --check server.mjs && node --check lib/host-runner.mjs && node --check ui/graph.js && node --check cli.mjs"
   },
   "files": [
     "server.mjs",
@@ -34,6 +34,7 @@
     "LICENSE",
     "CHANGELOG.md",
     "assets/creator-source-graph.png",
+    "assets/creator-source-graph-home.png",
     "assets/agentlas-sign-in.png",
     "AGENTS.md"
   ]

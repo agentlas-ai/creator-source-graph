@@ -2,7 +2,7 @@
 
 **Find creator content on Instagram, YouTube, X and Threads, then trace its sources.**
 
-Creator Source Graph is an open-source local research app for Codex and Claude Code. Your existing AI host discovers public content, checks available view counts, follows source links, and recommends evidence-backed next steps in a browser graph on your computer. No model or platform API keys are required for the skill workflow.
+Creator Source Graph is an open-source local research app for Codex and Claude Code. Your subscribed local AI host discovers public content, checks available view counts, follows source links, and distinguishes reference sources from publication opportunities in a browser graph on your computer. No model or platform API keys are required.
 
 ![Creator Source Graph browser workspace](assets/creator-source-graph.png)
 
@@ -19,19 +19,37 @@ The host reads [the setup instructions](AGENTS.md), installs the app and persona
 
 From the obtained app folder, the host runs `./runtime/node cli.mjs setup --host codex <target-url>` or `./runtime/node cli.mjs setup --host claude <target-url>` (use `node` for source installations or `runtime\node.exe` on Windows). It reads the installed skill from the setup receipt and continues in the same session. Without a research target, setup opens the app and asks what to investigate; the installation repository URL is not automatically the target.
 
-Your host supplies reasoning, search and browser execution. Its existing subscription, tool availability, permissions and usage limits apply. Installing the app does not add missing host tools. A standalone browser cannot perform AI research by itself, and a cloud-only host cannot reach this machine's loopback app.
+Your host supplies reasoning, search and browser execution. Its existing subscription, tool availability, permissions and usage limits apply. Installing the app does not install Codex or Claude Code, add missing tools, or sign you into those hosts. A cloud-only host cannot reach this machine's loopback app.
+
+## Start at home, then inspect the analysis
+
+![Centered brand URL home screen](assets/creator-source-graph-home.png)
+
+After Agentlas sign-in, the home screen presents a centered URL form. Enter a product or repository URL, choose **Auto**, **Codex** or **Claude**, then submit it to start actual local CLI research. The app moves to the analysis view as the investigation progresses. Use **Back** to return home for a different URL, or **View latest** to reopen the retained analysis. The analysis view also keeps its editable target URL and **Reanalyze** control. The app requires an installed local Codex or Claude Code CLI signed in with an existing subscription. Auto selects an authenticated subscription host. If the CLI is missing or signed out, the app shows an actionable error before replacing the previous result.
+
+Each browser analysis starts a **new local CLI research job**; it does not resume the AI chat that installed the app. The initial install-and-research request can still continue in that original chat through the installed skill. Both routes use the host’s existing subscription and tools, without provider API keys or separate provider billing.
+
+The browser job follows explicit links and investigates possible source connections when paths are incomplete. Candidate connections remain estimates; missing evidence stays unresolved. There is no minimum connection count.
+
+Progress appears in the app. Validated results are imported automatically with their actual complete or partial status. **Stop**, **Sign out** and **Quit local app** abort the job. Superseded jobs and results from a changed account cannot import into the current run.
+
+Reanalysis creates a fresh run and retains existing source records and run history. History records run metadata; it does not restore a historical graph snapshot. Missing views, restricted platforms and incomplete source paths remain explicit in the results.
+
+The host derives roughly 6–10 keyword angles from the opened target to find a broader sample of related social content. Keywords remain tied to product evidence rather than becoming claims of market coverage. Optional `product.keywords` stores up to 16 keywords, shown as compact chips in the analysis.
 
 ## Explore the whole graph, then choose a next step
 
 The graph opens with all collected content and its source connections visible. Click a content item to focus on its upstream path; return to the overview to compare the whole investigation.
 
-The left panel combines the four-platform content sample with compact, icon-led AI priorities: what to read, investigate, build or create first, and where to begin. Open a recommendation to inspect its rationale and supporting pages. These are proposed next actions from your host, not completed work or predictions of reach.
+The left panel shows publication channel suggestions as icons and short names, alongside the four-platform content sample. Hover for one short summary and an original link. Select a channel to see its compact brand → channel → feed → possible AI discovery → creators route. Reference originals stay separate.
 
-- **Left — choose a starting point.** Review the AI priorities and content on Instagram, YouTube, X and Threads. Inspect each post, creator, observation date and available views. Rank confirmed views within each platform; unknown views remain unknown, and likes or search snippets are not substituted for views. This is a bounded discovery sample, not a global popularity ranking.
-- **Middle — trace intermediate sources.** Follow explicit hyperlinks or URL citations from a post to projects, articles, papers and other material, then continue upstream. Inspect each connection's supporting page.
-- **Right — inspect the earliest source found.** Expand a source’s summary or path when you need the details. Compare the upstream sources discovered in this investigation. A terminal node or early publication date does not prove the world's first origin. A possible source relationship supported by semantic and chronological evidence remains labelled **inferred**, with its rationale and evidence, separate from explicit links.
+A project homepage, repository or paper—such as LangGraph—is a reference original, not automatically a place to distribute your product. Your own GitHub and docs hold verifiable product evidence. Real channel suggestions need a separate submission/publication route, its public rules, and an opened feed or index where new entries can be found. A community Show HN route, launch directory or newsletter tip route can be considered only when that evidence is available. Do not assume those channels supplied the traced creator posts. Suggestions without verified placement metadata remain reference-only; acceptance, creator AI use and visibility probability are unverified unless independently observed.
 
-Hover nodes and platform logos for original URLs, short summaries and collection status. Export JSON to review the investigation. Source scores describe paths in the collected sample, not audience overlap, market share or conversion.
+- **Left — choose a starting point.** Browse suggested channels and Instagram, YouTube, X and Threads content. Available views are ordered within each platform; unknown counts remain unknown.
+- **Middle — follow sources.** Explore the whole map or select content to focus its connections. Solid links and dashed candidate connections stay visually distinct.
+- **Right — open a source.** Browse source names and compact references, with a short summary and original link. “Earliest found” refers to this investigation’s sample.
+
+The screen keeps explanations brief: icons, names, one short summary and original links. Detailed research metadata remains in the JSON export.
 
 ## Download or run from source
 
@@ -108,18 +126,18 @@ You can add a brief, such as “Find creators covering AI agent workflows and tr
 ## How it works
 
 ```text
-Product URL + research brief
+Agentlas sign-in → home URL form
           ↓
-Codex / Claude Code + installed skill
+New subscribed local CLI job + installed skill
           ↓
-Agentlas sign-in → account's local workspace
+Product keywords → related social content → upstream sources
           ↓
-Host reasoning, web search, browser observations
+Validated observations → reference graph + evidenced publication channels
           ↓
-Structured research batches → local app → browser source graph
+Back → new URL, or View latest → retained analysis
 ```
 
-The browser app does not run an autonomous LLM. Research progresses while an AI host is executing the skill. The app's HTTP collection and observations submitted by an AI agent have different provenance; one must not be mistaken for the other.
+The app delegates browser analysis to a new subscribed local CLI job. You can also invoke the installed skill directly in an existing AI host session. The app’s HTTP collection and observations submitted by an AI agent have different provenance; one must not be mistaken for the other.
 
 Local-first means the workspace and graph are stored on your machine. Your AI host and any public sites it visits still follow their own data policies. Review a JSON export before sharing it.
 
@@ -140,7 +158,9 @@ Run commands from the app directory:
 | `node cli.mjs export [runId]` | Export the local workspace, optionally with run status. |
 | `node cli.mjs stop <runId>` | Cancel a research run while keeping the app available. |
 
-A run records research progress; starting one does not launch or purchase an AI model. Invoke the installed skill in your AI host to perform the research.
+The manual `start` command creates a ready run for your current AI host to research and submit. The browser’s Analyze/Reanalyze action separately launches a new subscribed local CLI job. Neither route purchases a model subscription.
+
+For local integrations, `GET /api/research/hosts` reports host availability. `POST /api/research` accepts `{url, host}` with `host` set to `auto`, `codex` or `claude`, and starts a new local research job. `/api/analyze` creates a ready run only; it does not launch a host job.
 
 ## Structured batch input
 
