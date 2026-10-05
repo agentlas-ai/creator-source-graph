@@ -90,6 +90,8 @@ No npm dependencies need to be installed. The launcher starts the local server a
 
 ## Sign in with Agentlas
 
+The sign-in button opens Agentlas's official page at `agentlas.cloud`. New users can create an account with Google or Apple; existing accounts can also use email and password. Successful sign-in returns to this app's URL input home.
+
 The first skill invocation opens the Agentlas login screen. After you sign in, the browser returns to Creator Source Graph and the AI continues with the product URL you supplied. If login takes longer than the host's wait, the skill checks login status and resumes the same request.
 
 Agentlas login identifies your local workspace. It does not replace your Codex or Claude Code subscription. No model or search API key is required. Graphs stay on your computer and are separated by Agentlas account. The app does not upload your workspace to a central graph service; signing in on another computer does not download a cloud copy.
