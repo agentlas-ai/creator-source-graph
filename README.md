@@ -1,25 +1,38 @@
 # Creator Source Graph
 
-**Find creator content on Instagram, YouTube, X and Threads, then trace its sources.**
+**Find creator content on Instagram, YouTube, X and Threads, trace likely sources, and explore where to publish your product.**
 
 Creator Source Graph is an open-source local research app for Codex and Claude Code. Your subscribed local AI host discovers public content, checks available view counts, follows source links, and distinguishes reference sources from publication opportunities in a browser graph on your computer. No model or platform API keys are required.
 
 ![Creator Source Graph browser workspace](assets/creator-source-graph.png)
 
-## Install and open with your AI host
+## Quick start: install, sign in, analyze
 
-In a local Codex or Claude Code session with shell, web search and browser tools, send:
+1. In a local Codex or Claude Code session with shell, web search and browser tools, send:
 
-```text
-https://github.com/agentlas-ai/creator-source-graph
-Install and open this app. Then research creators covering https://agentlas.cloud.
-```
+   ```text
+   https://github.com/agentlas-ai/creator-source-graph
+   Install and open this app.
+   ```
 
-The host reads [the setup instructions](AGENTS.md), installs the app and personal skill, opens the browser and prompts you to sign in with Agentlas. After authentication, it continues the original research target. If sign-in is still pending, it checks login status before continuing; it does not claim research has already run.
+2. Sign in with **Agentlas** in the browser that opens.
+3. Enter **your product or brand URL** on the home screen and choose **Analyze**. Use **Back** for another URL, or edit the address and choose **Reanalyze**.
+
+The host reads [the setup instructions](AGENTS.md), installs the app and personal skill, and opens Agentlas sign-in. Append your own product URL if you want the installing chat to begin research after sign-in.
 
 From the obtained app folder, the host runs `./runtime/node cli.mjs setup --host codex <target-url>` or `./runtime/node cli.mjs setup --host claude <target-url>` (use `node` for source installations or `runtime\node.exe` on Windows). It reads the installed skill from the setup receipt and continues in the same session. Without a research target, setup opens the app and asks what to investigate; the installation repository URL is not automatically the target.
 
 Your host supplies reasoning, search and browser execution. Its existing subscription, tool availability, permissions and usage limits apply. Installing the app does not install Codex or Claude Code, add missing tools, or sign you into those hosts. A cloud-only host cannot reach this machine's loopback app.
+
+## Share in a DM (Korean)
+
+```text
+브랜드 관련 SNS 콘텐츠의 출처를 역추적해, 어디에 글을 올릴지 추천하는 오픈소스 앱이에요.
+https://github.com/agentlas-ai/creator-source-graph
+내 PC의 Codex나 Claude Code에 위 링크와 함께 “이 앱 설치해서 열어줘”라고 입력하세요.
+Agentlas 로그인 후 브랜드 URL을 넣고 Analyze를 누르면 됩니다.
+인스타·유튜브·X·Threads를 기존 AI 구독으로 검색해요. 별도 API 키는 필요 없어요.
+```
 
 ## Start at home, then inspect the analysis
 
