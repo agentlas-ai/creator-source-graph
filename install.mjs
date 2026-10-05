@@ -56,21 +56,31 @@ async function reusable(target, source, appRoot) {
 }
 
 export async function installFromArgs(args, appRoot = SOURCE_ROOT) {
-  let host, skillsDir, force = false;
+  let host, skillsDir, scope, force = false, skip = false;
   for (let i = 0; i < args.length; i++) {
     const option = args[i];
-    if (option === '--host' && args[i + 1]) { if (host) throw new Error('--host was repeated.'); host = args[++i]; }
-    else if (option === '--skills-dir' && args[i + 1]) { if (skillsDir) throw new Error('--skills-dir was repeated.'); skillsDir = args[++i]; }
-    else if (option === '--force') force = true;
+    if (option === '--host' && args[i + 1] && !args[i + 1].startsWith('--')) { if (host) throw new Error('--host was repeated.'); host = args[++i]; }
+    else if (option === '--skills-dir' && args[i + 1] && !args[i + 1].startsWith('--')) { if (skillsDir) throw new Error('--skills-dir was repeated.'); skillsDir = args[++i]; }
+    else if (option === '--skill-scope' && args[i + 1] && !args[i + 1].startsWith('--')) { if (scope) throw new Error('--skill-scope was repeated.'); scope = args[++i]; }
+    else if (option === '--skip-skills') { if (skip) throw new Error('--skip-skills was repeated.'); skip = true; }
+    else if (option === '--force') { if (force) throw new Error('--force was repeated.'); force = true; }
     else throw new Error(`Unknown or incomplete install option: ${option}`);
   }
   if (!['codex', 'claude', 'both'].includes(host)) throw new Error('Use --host codex, --host claude, or --host both.');
+  if (scope && !['app', 'user'].includes(scope)) throw new Error('Use --skill-scope app or --skill-scope user.');
+  if (scope && skillsDir) throw new Error('--skill-scope and --skills-dir cannot be combined.');
+  if (skip && (scope || skillsDir || force)) throw new Error('--skip-skills cannot be combined with installation options.');
+  if (skillsDir && /[\r\n\0]/.test(skillsDir)) throw new Error('--skills-dir must be a valid directory path.');
+  const mode = skillsDir ? 'custom' : scope ?? 'app';
+  if (force && mode === 'app') throw new Error('--force requires --skill-scope user or --skills-dir.');
   if (skillsDir && host === 'both') throw new Error('--skills-dir requires a single host.');
   appRoot = resolve(appRoot);
   await access(join(appRoot, 'cli.mjs'));
   await access(join(appRoot, 'launch.mjs'));
   const source = join(appRoot, 'skills', NAME);
   for (const file of SKILL_FILES) await access(join(source, file));
+  const bridge = { commandPrefix: [process.execPath, join(appRoot, 'cli.mjs')], appRoot, nodeExecutable: process.execPath };
+  if (mode === 'app') return { installed: [], scope: 'app', skipped: skip, permanentInstallation: false, version: '0.7.1', skillFiles: [join(source, 'SKILL.md')], bridge, note: 'No personal skill directory was changed. Read the bundled SKILL.md and use bridge.commandPrefix for local CLI commands in this same AI session. Explicit --skill-scope user or --skills-dir opts into persistent installation.' };
   const hosts = host === 'both' ? ['codex', 'claude'] : [host];
   const targets = hosts.map(kind => ({
     host: kind,
@@ -135,7 +145,7 @@ export async function installFromArgs(args, appRoot = SOURCE_ROOT) {
     } finally { await rm(temp, { recursive: true, force: true }); }
   }
   return {
-    installed, version: '0.7.1',
+    installed, scope: mode, skipped: false, permanentInstallation: true, skillFiles: installed.map(entry => join(entry.path, 'SKILL.md')), bridge, version: '0.7.1',
     invocation: { codex: '$creator-source-graph <url>', claude: '/creator-source-graph <url>' },
     note: 'The current AI host can read the installed SKILL.md now and continue in this session. New sessions can discover the personal skill normally. The bridge uses this app folder and Node runtime; reinstall if either moves. No account settings or provider credentials were changed.',
   };

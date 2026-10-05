@@ -185,8 +185,8 @@ function help() {
       'stop <runId> / cancel <runId>': 'Cancel this research run; does not shut down the app.',
       open: 'Start/reuse app and open local graph, or Agentlas sign-in when signed out.',
       'skill-prompt [url]': 'Print a prompt to invoke the installed skill in an existing AI host.',
-      'install --host codex|claude|both [--skills-dir path] [--force]': 'Install local host skills. Custom directory requires one host.',
-      'setup [target-url] --host codex|claude|both [--skills-dir path] [--force] [--wait-seconds N]': 'Install/reuse matching host skill, launch app and open Agentlas login/graph. Optional target resumes in this AI host after login.',
+      'install --host codex|claude|both [--skill-scope app|user | --skills-dir path | --skip-skills] [--force]': 'Default reads bundled skill without personal installation. Explicit user/custom scope installs; custom directory requires one host.',
+      'setup [target-url] --host codex|claude|both [--skill-scope app|user | --skills-dir path | --skip-skills] [--force] [--wait-seconds N]': 'Read bundled skill by default (explicit user/custom installs), launch app and open Agentlas login/graph. Optional target resumes in this AI host after login.',
       'help / version': 'Print machine-readable help or version.',
     },
     localUrl: 'http://127.0.0.1:4327',
@@ -207,12 +207,12 @@ async function dispatch(argv) {
   if (command === 'setup') {
     const installationArgs = [], startArgs = []; let host, waitSpecified = false;
     for (let i = 0; i < args.length; i++) {
-      if (['--host', '--skills-dir', '--wait-seconds'].includes(args[i])) {
+      if (['--host', '--skills-dir', '--skill-scope', '--wait-seconds'].includes(args[i])) {
         const option = args[i], value = args[++i];
-        if (!value) throw new Error('Missing value for ' + option);
+        if (!value || value.startsWith('--')) throw new Error('Missing value for ' + option);
         if (option === '--wait-seconds') { startArgs.push(option, value); waitSpecified = true; }
         else { installationArgs.push(option, value); if (option === '--host') host = value; }
-      } else if (args[i] === '--force') installationArgs.push(args[i]);
+      } else if (['--force', '--skip-skills'].includes(args[i])) installationArgs.push(args[i]);
       else if (args[i].startsWith('--')) throw new Error('Unknown setup option: ' + args[i]);
       else startArgs.unshift(args[i]);
     }
@@ -235,10 +235,11 @@ async function dispatch(argv) {
     }
     return { ...started, installation, graphBrowser,
       hostAction: {
-        skillFiles: installation.installed.map(entry => resolve(entry.path, 'SKILL.md')),
+        skillFiles: installation.skillFiles,
+        bridge: installation.bridge,
         action: started.loginRequired ? 'Wait for Agentlas sign-in; poll login status without opening another page, then resume this same target.' :
-          started.run ? 'Read the installed SKILL.md now and perform research in this current AI session, reusing the exact returned run ID.' :
-          'The app is open. Read the installed SKILL.md and continue when the user supplies a product/repository target URL.',
+          started.run ? 'Read the receipt SKILL.md now and perform research in this current AI session, reusing the exact returned run ID.' :
+          'The app is open. Read the receipt SKILL.md and continue when the user supplies a product/repository target URL.',
         startsAnotherModelSession: false,
       },
     };
