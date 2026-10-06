@@ -32,7 +32,7 @@ function currentRun(){return researchRuns.find(r=>r.id===activeRunId);}
 function strategies(){return graph?.analysis?.aiStrategies??[];}
 function placements(){return strategies().filter(s=>['placement','channel-candidate'].includes(s.recommendationType)&&s.placement);}
 function channelNode(s){return graph?.nodes.find(n=>n.url===s?.targetUrl);}
-function channelName(s){const labels={naverblog:'네이버 블로그',navercafe:'네이버 카페',kakao:'카카오 오픈채팅',daangn:'당근 카페'},title=channelNode(s)?.title?.split(/:\s+|\s+[|–—]\s+/)[0];return brief(title&&title!==host(s?.targetUrl)?title:labels[platform(s?.targetUrl)]||host(s?.targetUrl).replace(/^www\./,''),36);}
+function channelName(s){const h=host(s?.targetUrl),known=h==='news.ycombinator.com'&&/^https:\/\/news\.ycombinator\.com\/show(?:[/.?#]|$)/.test(s?.targetUrl)?'Show HN':h==='news.hada.io'?'GeekNews':/(^|\.)gpters\.org$/.test(h)?'GPters':null,labels={naverblog:'네이버 블로그',navercafe:'네이버 카페',kakao:'카카오 오픈채팅',daangn:'당근 카페'},title=channelNode(s)?.title?.split(/:\s+|\s+[|–—]\s+/)[0];return brief(known||(title&&title!==h?title:labels[platform(s?.targetUrl)]||h.replace(/^www\./,'')),36);}
 const actionNames={read:'Inspect',investigate:'Check',build:'Integrate',create:'Publish'};
 const runLabels={ready:'Ready for your AI',searching:'Researching',complete:'Complete',partial:'Partial coverage',error:'Error',cancelled:'Stopped'};
 const aiHostNames={codex:'Codex',claude:'Claude'};
