@@ -4,8 +4,9 @@ import { realpathSync } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loginErrorMessage } from './lib/auth.mjs';
 
-const VERSION = '0.7.3';
+const VERSION = '0.7.4';
 const MAX_BYTES = 8 * 1024 * 1024;
 const APP_ROOT = resolve(process.env.CREATOR_GRAPH_APP_ROOT || dirname(fileURLToPath(import.meta.url)));
 
@@ -123,7 +124,10 @@ async function authStatus(origin) {
     if (typeof raw.user.displayName === 'string') result.user.displayName = raw.user.displayName.slice(0, 160);
   }
   if (typeof raw.expiresAt === 'string' && Number.isFinite(Date.parse(raw.expiresAt))) result.expiresAt = new Date(raw.expiresAt).toISOString();
-  if (raw.status === 'error') result.error = 'Agentlas sign-in did not complete. Check the sign-in page and retry login when ready.';
+  if (raw.status === 'error') {
+    result.error = loginErrorMessage(raw.errorCode) || 'Agentlas sign-in did not complete. Check the sign-in page and retry login when ready.';
+    if (loginErrorMessage(raw.errorCode)) result.errorCode = raw.errorCode;
+  }
   return result;
 }
 

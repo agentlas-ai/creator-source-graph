@@ -16,7 +16,7 @@ import { dataDirectory } from './lib/runtime.mjs';
 import { openAuth } from './lib/auth.mjs';
 
 export const ROOT = path.dirname(fileURLToPath(import.meta.url));
-export const VERSION = '0.7.3';
+export const VERSION = '0.7.4';
 const STATIC = new Map([['/', 'graph.html'], ['/analysis', 'graph.html'], ['/index.html', 'graph.html'], ['/app.js', 'graph.js'], ['/style.css', 'graph.css']]);
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' };
 function json(res, status, value) {

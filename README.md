@@ -100,6 +100,8 @@ Agentlas login identifies your local workspace. It does not replace your Codex o
 
 Use **Sign out** to return to the login screen. The app keeps your local graph for your next sign-in. On upgrade, an existing unassigned workspace is preserved and copied into the first signed-in account's local workspace; subsequent accounts start separately.
 
+If sign-in does not return to the app, keep the local app running and finish sign-in in the same browser. A sign-in link lasts 10 minutes. After restarting the app or when a link expires, return to its home screen and click **Sign in with Agentlas** again. You can check `node cli.mjs login status` (or `./runtime/node cli.mjs login status` in a bundled package) without opening another page; callback failures include a safe error code and retry guidance.
+
 ![Agentlas sign-in screen for Creator Source Graph](assets/agentlas-sign-in.png)
 
 ## Connect Codex or Claude Code

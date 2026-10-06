@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.4 — 2026-10-06
+
+- Reuses an active Agentlas sign-in when its button is opened more than once, preserving the first tab's return link.
+- Joins repeated callbacks while sign-in is finishing instead of exchanging the same authorization code twice.
+- Shows actionable retry guidance for expired, restarted, incomplete and rejected sign-ins, with safe diagnostic codes in login status.
+- Accepts the local app's explicit port 80 callback without losing the exact redirect URI.
+
 ## 0.7.3 — 2026-10-06
 
 - Searches domestic and English/global results together, expanding from the target's primary subject into related functions, principles and problems supported by its page.
