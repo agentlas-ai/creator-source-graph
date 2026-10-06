@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.3 — 2026-10-06
+
+- Searches domestic and English/global results together, expanding from the target's primary subject into related functions, principles and problems supported by its page.
+- Broadens web source discovery across articles, news, specialist blogs, cafe boards, communities, papers, official resources and repositories, retaining useful discoveries when originals are restricted.
+- Supports search-backed inferred source candidates with separate endpoint comparisons, dashed graph paths and persistence across restarts; original-page metadata, scores and earliest-origin claims remain unavailable for those paths.
+- Raises the local research pool to 80 records and 24 inferred candidates, without forcing minimum counts or unrelated filler.
+- Keeps graph logos readable as the result pool grows, with scrolling for larger maps and deeper source chains.
+- Synchronizes the launcher and app version so fresh release launches can pass the startup health check.
+- Includes the subscription setup-token, optional skill installation and Korean channel improvements from 0.7.2.
+
 ## 0.7.2 — 2026-10-06
 
 - Preserves target language, market and specific subject in research, starting with target-linked social content instead of filling niche searches with unrelated English results.

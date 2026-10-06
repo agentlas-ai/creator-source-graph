@@ -16,7 +16,7 @@ import { dataDirectory } from './lib/runtime.mjs';
 import { openAuth } from './lib/auth.mjs';
 
 export const ROOT = path.dirname(fileURLToPath(import.meta.url));
-export const VERSION = '0.7.2';
+export const VERSION = '0.7.3';
 const STATIC = new Map([['/', 'graph.html'], ['/analysis', 'graph.html'], ['/index.html', 'graph.html'], ['/app.js', 'graph.js'], ['/style.css', 'graph.css']]);
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' };
 function json(res, status, value) {
@@ -130,14 +130,14 @@ export async function createApp({ dataDir = dataDirectory(), seed = { records: [
     let progress = Promise.resolve();
     try {
       await jobUpdate(job, workspace => execution(transitionResearchRun(workspace, job.runId, 'searching', {
-        note: 'Searching the four platforms and tracing opened source pages.'
+        note: 'Searching domestic and global content and tracing source candidates.'
       }), { state: 'running', phase: 'researching' }));
       if (!jobActive(job)) return;
       const result = await researchRunner.runResearch({ host: job.host, url: job.url, runId: job.runId, signal: job.controller.signal,
         onProgress: value => {
           if (!jobActive(job) || !['starting', 'searching', 'researching', 'validating'].includes(value.phase)) return;
           progress = progress.then(() => jobUpdate(job, workspace => execution(transitionResearchRun(workspace, job.runId, 'searching', {
-            note: value.phase === 'validating' ? 'Validating the collected evidence.' : 'Searching the four platforms and tracing opened source pages.'
+            note: value.phase === 'validating' ? 'Validating the collected evidence.' : 'Searching domestic and global content and tracing source candidates.'
           }), { phase: value.phase }))).catch(() => {});
         }
       });
@@ -155,7 +155,7 @@ export async function createApp({ dataDir = dataDirectory(), seed = { records: [
       await progress;
       if (jobActive(job)) {
         const code = ['HOST_UNAVAILABLE', 'HOST_AUTH_REQUIRED', 'HOST_VERSION_UNSUPPORTED', 'TIMEOUT', 'OUTPUT_INVALID', 'OUTPUT_TOO_LARGE', 'HOST_FAILED', 'WEB_RESEARCH_UNVERIFIED'].includes(error.code) ? error.code : 'OUTPUT_INVALID';
-        const notes = { HOST_UNAVAILABLE: 'Install or check your local AI CLI, then reanalyze.', HOST_VERSION_UNSUPPORTED: 'Update your local AI CLI, then reanalyze.', WEB_RESEARCH_UNVERIFIED: 'The local AI host did not complete web search and page opening. Check its web tools or try another host.', TIMEOUT: 'Analysis timed out. Reanalyze to try again.', HOST_AUTH_REQUIRED: 'Sign in to your local AI subscription, then reanalyze.', HOST_FAILED: 'The local AI host could not finish. Check its sign-in and plan limits, then reanalyze.' };
+        const notes = { HOST_UNAVAILABLE: 'Install or check your local AI CLI, then reanalyze.', HOST_VERSION_UNSUPPORTED: 'Update your local AI CLI, then reanalyze.', WEB_RESEARCH_UNVERIFIED: 'The local AI host did not complete web search and page opening. Check its web tools or try another host.', TIMEOUT: 'Analysis timed out. Reanalyze to try again.', HOST_AUTH_REQUIRED: 'Sign in to your local AI subscription, then reanalyze. If using Claude setup-token, renew an expired or invalid token and restart this app.', HOST_FAILED: 'The local AI host could not finish. Check its sign-in and plan limits, then reanalyze.' };
         await jobUpdate(job, workspace => execution(transitionResearchRun(workspace, job.runId, 'error', {
           note: notes[code] || 'The local AI host did not return valid evidence. Reanalyze to try again.'
         }), { state: 'error', errorCode: code, endedAt: new Date().toISOString() })).catch(() => {});
