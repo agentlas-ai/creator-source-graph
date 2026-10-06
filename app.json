@@ -2,7 +2,7 @@
   "schema": "agentlas.app/v0.1",
   "id": "creator-source-graph",
   "name": "Creator Source Graph",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "tagline": "Find the content. Trace it back to the source.",
   "description": "Four social platforms, observed view rankings, and evidence-backed source tracing through your subscribed AI host.",
   "appType": "agent-app",

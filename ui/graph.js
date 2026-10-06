@@ -9,6 +9,7 @@ const platform=url=>{const h=host(url);return /(^|\.)youtube(?:-nocookie)?\.com$
 const DISCOVERY=['instagram','youtube','x','threads'];
 let graph=null,active=false,selectedContent=null,selected=null,selectedStrategy=null,showInferred=true,researchRuns=[],activeRunId=null,lastSnapshot='',polling=false,closed=false,guide=null,contentPlatform='all';
 let authenticated=false,authChecking=false,authGeneration=0,authUserId=null;
+let loginOpening=false;
 let draftDirty=false,startingResearch=false,hostStatuses=null,view=location.pathname==='/analysis'?'analysis':'home';
 const STALE_RESPONSE='Account changed; ignored stale response.';
 async function api(path,options={}){
@@ -190,15 +191,21 @@ $('#source-graph').addEventListener('keydown',ev=>{if((ev.key==='Enter'||ev.key=
 for(const dialog of document.querySelectorAll('dialog'))dialog.addEventListener('click',ev=>{if(ev.target===dialog)dialog.close();});
 $('#import-form').addEventListener('submit',async ev=>{ev.preventDefault();const generation=authGeneration;try{let data;try{data=JSON.parse($('#import-json').value);}catch{throw new Error('Invalid JSON syntax.');}const result=await api('/api/import',{method:'POST',body:JSON.stringify(data)});if(!authenticated||generation!==authGeneration)return;acceptWorkspace(result.graph);$('#import-status').textContent='+'+result.report.added+' added · '+result.report.duplicates+' duplicates · reported metadata';}catch(err){if(authenticated&&generation===authGeneration)$('#import-status').textContent=err.message;}});
 function showLogin(session={}){
-  const wasAuthenticated=authenticated;authenticated=false;authUserId=null;authGeneration++;graph=null;active=false;selected=null;selectedContent=null;selectedStrategy=null;researchRuns=[];activeRunId=null;lastSnapshot='';guide=null;contentPlatform='all';showInferred=true;draftDirty=false;startingResearch=false;hostStatuses=null;hideHover();
+  const wasAuthenticated=authenticated;authenticated=false;authUserId=null;if(wasAuthenticated)authGeneration++;graph=null;active=false;selected=null;selectedContent=null;selectedStrategy=null;researchRuns=[];activeRunId=null;lastSnapshot='';guide=null;contentPlatform='all';showInferred=true;draftDirty=false;startingResearch=false;hostStatuses=null;hideHover();
   $('#authenticated-app').hidden=true;$('#login-gate').hidden=false;$('#account-name').textContent='';$('#home-account-name').textContent='';$('#target-input').value='';$('#home-url').value='';$('#target-url').hidden=true;$('#target-url').removeAttribute('href');$('#research-host').value='auto';$('#home-host').value='auto';status('');
   for(const id of ['source-graph','content-carousel','origin-results','scope-counters','strategy-list','content-count','keyword-strip','reference-source-list','reference-count'])$('#'+id).replaceChildren();
   $('#keyword-strip').hidden=true;
   $('#references-panel').hidden=true;$('#references-panel').open=false;
   if(wasAuthenticated){for(const dialog of document.querySelectorAll('dialog'))if(dialog.open)dialog.close();$('#inspector-body').replaceChildren();}
   $('#import-json').value='';$('#import-status').textContent='';
-  $('#login-status').textContent=closed?'Local app stopped. You may close this tab.':session.error?String(session.error).slice(0,180):session.status==='pending'?'Waiting for Agentlas sign-in…':session.status==='error'?'Sign-in could not be completed. Try again.':'';
+  $('#login-status').textContent=closed?'Local app stopped. You may close this tab.':session.error?String(session.error).slice(0,180):session.status==='pending'?session.loginStage==='finishing'?'Finishing sign-in…':'Continue sign-in in your browser.':session.status==='error'?'Sign-in could not be completed. Try again.':'';
 }
+$('#sign-in-button').addEventListener('click',async ev=>{
+  ev.preventDefault();if(loginOpening||closed)return;loginOpening=true;$('#sign-in-button').setAttribute('aria-disabled','true');$('#login-status').textContent='Opening your browser…';
+  try{const session=await api('/api/auth/login',{method:'POST',body:'{}'});if(session.authenticated){await checkAuth();return;}showLogin(session);$('#login-browser-fallback').hidden=false;if(session.browser==='manual')$('#login-status').textContent='Open the sign-in page to continue.';}
+  catch(err){if(err.message!==STALE_RESPONSE){$('#login-status').textContent=err.message;$('#login-browser-fallback').hidden=false;}}
+  finally{loginOpening=false;$('#sign-in-button').removeAttribute('aria-disabled');}
+});
 async function checkAuth(){
   if(authChecking||closed)return;authChecking=true;
   try{const session=await api('/api/auth/status');if(session.authenticated===true&&session.user?.id){if(authUserId&&authUserId!==session.user.id)showLogin();const first=!authenticated;authenticated=true;authUserId=session.user.id;$('#login-gate').hidden=true;$('#authenticated-app').hidden=false;$('#account-name').textContent=session.user.displayName||'Agentlas account';$('#home-account-name').textContent=session.user.displayName||'Agentlas account';if(first){await refresh({quiet:true});showView(view);void loadHosts();}}else if(authenticated||!$('#login-gate').hidden)showLogin(session);}

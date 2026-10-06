@@ -94,13 +94,13 @@ No npm dependencies need to be installed. The launcher starts the local server a
 
 The sign-in button opens Agentlas's official page at `agentlas.cloud`. New users can create an account with Google or Apple; existing accounts can also use email and password. Successful sign-in returns to this app's URL input home.
 
-The first skill invocation opens the Agentlas login screen. After you sign in, the browser returns to Creator Source Graph and the AI continues with the product URL you supplied. If login takes longer than the host's wait, the skill checks login status and resumes the same request.
+The first skill invocation opens Agentlas sign-in in your computer's default browser. Sign in there with Google, Apple or your existing Agentlas email account. The local app detects completion and opens the URL form, including when it is displayed inside your AI host's browser. If login takes longer than the host's wait, the skill checks login status and resumes the same product URL.
 
 Agentlas login identifies your local workspace. It does not replace your Codex or Claude Code subscription. No model or search API key is required. Graphs stay on your computer and are separated by Agentlas account. The app does not upload your workspace to a central graph service; signing in on another computer does not download a cloud copy.
 
 Use **Sign out** to return to the login screen. The app keeps your local graph for your next sign-in. On upgrade, an existing unassigned workspace is preserved and copied into the first signed-in account's local workspace; subsequent accounts start separately.
 
-If sign-in does not return to the app, keep the local app running and finish sign-in in the same browser. A sign-in link lasts 10 minutes. After restarting the app or when a link expires, return to its home screen and click **Sign in with Agentlas** again. You can check `node cli.mjs login status` (or `./runtime/node cli.mjs login status` in a bundled package) without opening another page; callback failures include a safe error code and retry guidance.
+If sign-in does not return to the app, keep the local app running and finish sign-in in the browser that opened. **Open sign-in page** is available if the browser did not open automatically. A sign-in link lasts 10 minutes and can survive an app restart on the same local port; when it expires, click **Sign in with Agentlas** again. Reopening that button preserves an active sign-in. You can check `node cli.mjs login status` (or `./runtime/node cli.mjs login status` in a bundled package) without opening another page; callback failures include a safe error code and retry guidance. Signing out immediately closes the local session and cancels any sign-in still finishing.
 
 ![Agentlas sign-in screen for Creator Source Graph](assets/agentlas-sign-in.png)
 

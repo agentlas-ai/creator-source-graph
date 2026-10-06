@@ -6,7 +6,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loginErrorMessage } from './lib/auth.mjs';
 
-const VERSION = '0.7.4';
+const VERSION = '0.7.5';
 const MAX_BYTES = 8 * 1024 * 1024;
 const APP_ROOT = resolve(process.env.CREATOR_GRAPH_APP_ROOT || dirname(fileURLToPath(import.meta.url)));
 
@@ -62,9 +62,10 @@ async function request(origin, path, method = 'GET', payload) {
 async function health(origin) {
   const result = await request(origin, '/api/health');
   if (![result.product, result.app, result.id].includes('creator-source-graph')) throw new Error('The local port belongs to another app.');
-  if (typeof result.version !== 'string' || !/^\d+\.\d+\.\d+/.test(result.version)) throw new Error('The local app has no compatible version metadata.');
-  const [major, minor] = result.version.split('.').map(Number);
-  if (major === 0 && minor < Number(VERSION.split('.')[1])) throw new Error('This CLI requires Creator Source Graph ' + VERSION + ' or newer. Upgrade the app, close the older app and run start again.');
+  if (typeof result.version !== 'string' || !/^\d+\.\d+\.\d+$/.test(result.version)) throw new Error('The local app has no compatible version metadata.');
+  const [major, minor, patch] = result.version.split('.').map(Number);
+  const [requiredMajor, requiredMinor, requiredPatch] = VERSION.split('.').map(Number);
+  if (major < requiredMajor || (major === requiredMajor && (minor < requiredMinor || (minor === requiredMinor && patch < requiredPatch)))) throw new Error('This CLI requires Creator Source Graph ' + VERSION + ' or newer. Upgrade the app, close the older app and run start again.');
   return result;
 }
 
@@ -124,6 +125,10 @@ async function authStatus(origin) {
     if (typeof raw.user.displayName === 'string') result.user.displayName = raw.user.displayName.slice(0, 160);
   }
   if (typeof raw.expiresAt === 'string' && Number.isFinite(Date.parse(raw.expiresAt))) result.expiresAt = new Date(raw.expiresAt).toISOString();
+  if (raw.status === 'pending') {
+    result.loginStage = raw.loginStage === 'finishing' ? 'finishing' : 'waiting';
+    if (typeof raw.loginExpiresAt === 'string' && Number.isFinite(Date.parse(raw.loginExpiresAt))) result.loginExpiresAt = new Date(raw.loginExpiresAt).toISOString();
+  }
   if (raw.status === 'error') {
     result.error = loginErrorMessage(raw.errorCode) || 'Agentlas sign-in did not complete. Check the sign-in page and retry login when ready.';
     if (loginErrorMessage(raw.errorCode)) result.errorCode = raw.errorCode;
@@ -151,7 +156,7 @@ function waitOptions(args, defaultSeconds) {
 async function waitForLogin(origin, seconds, initial) {
   let auth = initial;
   const deadline = Date.now() + seconds * 1000;
-  while (!auth.authenticated && Date.now() < deadline) {
+  while (!auth.authenticated && auth.status !== 'error' && Date.now() < deadline) {
     await new Promise(done => setTimeout(done, Math.min(2000, deadline - Date.now())));
     auth = await authStatus(origin);
   }
@@ -162,12 +167,14 @@ async function loginFlow(origin, seconds, extras = {}) {
   const initial = await authStatus(origin);
   if (initial.authenticated) return initial;
   let browser = initial.status === 'pending' ? 'already-pending' : 'opened';
+  let waiting = initial;
   if (initial.status !== 'pending') {
-    try { await openBrowser(origin + '/auth/login?returnTo=/'); }
-    catch { browser = 'manual'; }
+    const opened = await request(origin, '/api/auth/login', 'POST', {});
+    browser = opened.browser === 'manual' ? 'manual' : 'opened';
+    waiting = await authStatus(origin);
   }
   if (seconds > 0) process.stderr.write('Sign in on the Agentlas page to continue. Waiting up to ' + seconds + ' seconds; no research has run.\n');
-  const auth = await waitForLogin(origin, seconds, initial);
+  const auth = await waitForLogin(origin, seconds, waiting);
   return auth.authenticated ? { ...auth, browser } : loginReceipt(origin, auth, {
     browser, waitedSeconds: seconds, ...extras,
     note: 'Sign in on the Agentlas page, then check login status and resume the same requested target. No research run was created.',

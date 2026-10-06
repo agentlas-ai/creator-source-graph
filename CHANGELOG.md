@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.5 — 2026-10-07
+
+- Opens Agentlas sign-in in the system browser while the local app waits and detects completion; provides a manual sign-in link if opening the browser fails.
+- Preserves an active sign-in across app restarts on the same local port and makes waiting, finishing, expiry and retry states available to the AI host.
+- Keeps sign-out immediate, cancels pending authentication requests, and prevents a late callback from restoring a signed-out account.
+- Retries one interrupted identity check using the existing grant without exchanging the authorization code twice, and restores saved sessions only after private-file validation succeeds.
+- Rejects older running app versions before using the updated login flow.
+
 ## 0.7.4 — 2026-10-06
 
 - Reuses an active Agentlas sign-in when its button is opened more than once, preserving the first tab's return link.

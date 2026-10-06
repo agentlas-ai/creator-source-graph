@@ -1,6 +1,6 @@
 {
   "name": "agentlas-creator-source-graph",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "license": "MIT",
   "type": "module",
   "description": "Trace Instagram, YouTube, X and Threads content back to intermediate and earliest found sources using your AI host.",

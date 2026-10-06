@@ -14,9 +14,10 @@ import { RESEARCH_PLATFORMS, createResearchRun, startResearchRun, importResearch
 import { detectHosts, runResearch } from './lib/host-runner.mjs';
 import { dataDirectory } from './lib/runtime.mjs';
 import { openAuth } from './lib/auth.mjs';
+import { openBrowser } from './launch.mjs';
 
 export const ROOT = path.dirname(fileURLToPath(import.meta.url));
-export const VERSION = '0.7.4';
+export const VERSION = '0.7.5';
 const STATIC = new Map([['/', 'graph.html'], ['/analysis', 'graph.html'], ['/index.html', 'graph.html'], ['/app.js', 'graph.js'], ['/style.css', 'graph.css']]);
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' };
 function json(res, status, value) {
@@ -51,7 +52,7 @@ function runFrom(workspace, id) {
   return run;
 }
 
-export async function createApp({ dataDir = dataDirectory(), seed = { records: [] }, empty = false, collect = collectBatch, authOptions, researchRunner = { detectHosts, runResearch } } = {}) {
+export async function createApp({ dataDir = dataDirectory(), seed = { records: [] }, empty = false, collect = collectBatch, authOptions, browserOpener = openBrowser, researchRunner = { detectHosts, runResearch } } = {}) {
   const auth = await openAuth(dataDir, authOptions);
   const stores = new Map(), jobs = new Map(), starts = new Map();
   let closing = false, hostCache = null;
@@ -188,7 +189,17 @@ export async function createApp({ dataDir = dataDirectory(), seed = { records: [
       if (req.method === 'GET' && url.pathname === '/auth/login') {
         if ((await auth.status()).authenticated) { res.writeHead(303, { location: '/', 'cache-control': 'no-store' }); return res.end(); }
         const origin = 'http://127.0.0.1:' + server.address().port;
-        res.writeHead(303, { location: auth.begin(origin), 'cache-control': 'no-store' }); return res.end();
+        res.writeHead(303, { location: await auth.begin(origin), 'cache-control': 'no-store', 'referrer-policy': 'no-referrer' }); return res.end();
+      }
+      if (req.method === 'POST' && url.pathname === '/api/auth/login') {
+        await body(req);
+        const identity = await auth.status();
+        if (identity.authenticated) return json(res, 200, identity);
+        const origin = 'http://127.0.0.1:' + server.address().port;
+        await auth.begin(origin);
+        let browser = 'opened';
+        try { await browserOpener(origin + '/auth/login?returnTo=/'); } catch { browser = 'manual'; }
+        return json(res, 200, { ...await auth.status(), browser, loginUrl: '/auth/login?returnTo=/' });
       }
       if (req.method === 'GET' && url.pathname === '/auth/callback') {
         try {
@@ -196,11 +207,12 @@ export async function createApp({ dataDir = dataDirectory(), seed = { records: [
           for (const id of new Set([...jobs.keys(), ...starts.keys()])) if (!identity.authenticated || identity.user.id !== id) abortAccount(id);
           if (identity.authenticated) await accountStore(identity.user);
         } catch { /* The local gate shows a safe retry message; graph files remain preserved. */ }
-        res.writeHead(303, { location: '/', 'cache-control': 'no-store' }); return res.end();
+        res.writeHead(303, { location: '/', 'cache-control': 'no-store', 'referrer-policy': 'no-referrer' }); return res.end();
       }
       if (req.method === 'POST' && url.pathname === '/api/auth/logout') {
         await body(req);
-        const previousIdentity = await auth.status();
+        const id = auth.accountId();
+        const previousIdentity = { authenticated: Boolean(id), ...(id ? { user: { id } } : {}) };
         if (!bindAccount(req, res, previousIdentity)) return;
         if (previousIdentity.authenticated) await abortAccount(previousIdentity.user.id);
         return json(res, 200, await auth.logout());
@@ -339,7 +351,7 @@ export async function createApp({ dataDir = dataDirectory(), seed = { records: [
     }
   });
   server.on('close', () => { closing = true; abortAll(); });
-  const shutdown = () => { closing = true; abortAll(); server.close(); server.closeIdleConnections(); };
+  const shutdown = () => { closing = true; abortAll(); auth.close(); server.close(); server.closeIdleConnections(); };
   return { server, auth, shutdown };
 }
 
